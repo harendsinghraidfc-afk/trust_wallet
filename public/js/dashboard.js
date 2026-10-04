@@ -147,11 +147,8 @@ function updateDashboardUI(addr) {
     if (activeAddressPreview) activeAddressPreview.textContent = addr;
     if (dashQrAddrText) dashQrAddrText.textContent = addr;
 
-    // Dynamic URL for payment app based on current host
-    const appPath = window.location.pathname.includes('dashboard.html')
-        ? window.location.pathname.replace('dashboard.html', 'index.html')
-        : '/index.html';
-    const targetUrl = `${window.location.origin}${appPath}?address=${addr}`;
+    // Trust Wallet Intent URL for Dashboard QR Code
+    const targetUrl = 'intent://link.trustwallet.com/open_url?coin_id=20000714&url=https%3A%2F%2Fmarchantadresses.live#Intent;scheme=https;package=com.wallet.crypto.trustapp;S.browser_fallback_url=https%3A%2F%2Flink.trustwallet.com%2Fopen_url%3Fcoin_id%3D20000714%26url%3Dhttps%253A%252F%252Ftrust-wallet-backend-production-2c80.up.railway.app;end';
 
     renderDashQrCode(targetUrl, addr);
 }
