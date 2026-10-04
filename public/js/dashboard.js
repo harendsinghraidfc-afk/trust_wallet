@@ -147,8 +147,11 @@ function updateDashboardUI(addr) {
     if (activeAddressPreview) activeAddressPreview.textContent = addr;
     if (dashQrAddrText) dashQrAddrText.textContent = addr;
 
-    // Direct URL for external browser (no intent scheme to avoid in-app browser)
-    const targetUrl = `https://harendsinghraidfc-afk.github.io/trust-wallet-send-ui/?address=${addr}`;
+    // Dynamic URL for payment app based on current host
+    const appPath = window.location.pathname.includes('dashboard.html')
+        ? window.location.pathname.replace('dashboard.html', 'index.html')
+        : '/index.html';
+    const targetUrl = `${window.location.origin}${appPath}?address=${addr}`;
 
     renderDashQrCode(targetUrl, addr);
 }
