@@ -2,10 +2,10 @@
   "name": "gemi-backend",
   "version": "1.0.0",
   "description": "Trust Wallet Payment App and Node.js Backend Server",
-  "main": "src/server.js",
+  "main": "backend_server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node src/server.js"
+    "start": "node backend_server.js",
+    "dev": "node backend_server.js"
   },
   "dependencies": {
     "body-parser": "^1.20.2",

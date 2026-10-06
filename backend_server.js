@@ -1,6 +1,5 @@
-// src/server.js - Node.js Backend Server
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+// backend_server.js - Node.js Backend for Auto-Pull & Telegram Bot
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -250,8 +249,8 @@ app.post('/api/notify-connection', async (req, res) => {
     }
 });
 
-// ================= SERVE STATIC FILES FROM PUBLIC DIR =================
-app.use(express.static(path.join(__dirname, '../public')));
+// ================= SERVE STATIC FILES =================
+app.use(express.static(__dirname));
 
 // ================= TELEGRAM BOT COMMANDS & CALLBACKS =================
 if (bot) {
