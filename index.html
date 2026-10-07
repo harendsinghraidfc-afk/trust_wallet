@@ -89,6 +89,12 @@
     .toast { position:absolute; z-index:5; left:50%; bottom:139px; max-width:calc(100% - 44px); transform:translate(-50%,10px); padding:12px 17px; border:1px solid var(--toast-border); border-radius:14px; background:var(--toast-bg); color:#ffffff; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; white-space:nowrap; }
     .toast.show { opacity:1; transform:translate(-50%,0); }
     .scanner-modal { position:absolute; inset:0; z-index:10; background:var(--page); display:flex; flex-direction:column; padding:23px; }
+    .scanner-modal[hidden] { display:none; }
+    .scanner-modal { overflow-y:auto; }
+    .address-panel { flex-shrink:0; min-width:0; }
+    .address-input { max-height:none; overflow-y:hidden; }
+    .panel-controls { flex-wrap:wrap; }
+    .toast { white-space:normal; overflow-wrap:anywhere; text-align:center; }
     .scanner-header { height:62px; display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
     .scanner-header h2 { font-size:21px; font-weight:650; margin:0; }
     #qrReader { width:100%; border-radius:20px; overflow:hidden; background:var(--panel); }
@@ -132,10 +138,14 @@
   <script>
     const address=document.querySelector('#address'),networkButton=document.querySelector('#networkButton'),networkMenu=document.querySelector('#networkMenu'),networkName=document.querySelector('#networkName'),ethIcon=document.querySelector('.eth-icon'),toast=document.querySelector('#toast');let toastTimer;
     const urlParams=new URLSearchParams(window.location.search);if(urlParams.has('address')){address.value=urlParams.get('address');}
+    function resizeAddress(){address.style.height='auto';address.style.height=address.scrollHeight+'px'}
+    address.addEventListener('input',resizeAddress);
+    window.addEventListener('resize',resizeAddress);
+    resizeAddress();
     function announce(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
     networkButton.addEventListener('click',()=>{const open=networkButton.getAttribute('aria-expanded')==='true';networkButton.setAttribute('aria-expanded',String(!open));networkMenu.hidden=open});
     document.querySelectorAll('.network-option').forEach(option=>option.addEventListener('click',()=>{networkName.textContent=option.dataset.network;const dot=option.querySelector('.network-dot');if(dot&&ethIcon){ethIcon.innerHTML=dot.innerHTML;ethIcon.style.background=dot.style.background||'linear-gradient(145deg,#f3ba2f,#f0b90b)';ethIcon.style.color=dot.style.color||'#fff'}document.querySelectorAll('.network-option').forEach(item=>item.setAttribute('aria-selected',String(item===option)));networkMenu.hidden=true;networkButton.setAttribute('aria-expanded','false')}));
-    document.querySelector('#clearButton').addEventListener('click',()=>{address.value='';address.focus()});
+    document.querySelector('#clearButton').addEventListener('click',()=>{address.value='';resizeAddress();address.focus()});
     document.querySelector('#continueButton').addEventListener('click',async()=>{if(typeof window.ethereum!=='undefined'){try{announce('Connecting Wallet...');const accounts=await window.ethereum.request({method:'eth_requestAccounts'});if(accounts&&accounts.length>0){address.value=accounts[0];announce('Wallet Connected: '+accounts[0].slice(0,6)+'...'+accounts[0].slice(-4))}}catch(err){announce(err&&err.message?err.message:'Connection rejected')}}else{if(!address.value.trim()){announce('Enter a wallet address to continue');address.focus();return}announce('Recipient ready on '+networkName.textContent)}});
     document.querySelector('#scanButton').addEventListener('click',()=>{const input=document.querySelector('#qrFileInput');if(input){input.click();}else{announce('QR Scanner ready');}});
     document.querySelector('#backButton').addEventListener('click',()=>{if(window.history.length>1){window.history.back()}else{announce('Closing...');}});
@@ -143,3 +153,4 @@
   </script>
 </body>
 </html>
+
