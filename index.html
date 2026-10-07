@@ -54,7 +54,8 @@
     html,body { width:100%; min-height:100%; margin:0; }
     body { min-height:100svh; background:var(--page); color:var(--text); }
     button,textarea { font:inherit; color:inherit; }
-    button { cursor:pointer; }
+    button { cursor:pointer; -webkit-tap-highlight-color:transparent; outline:none; }
+    button:focus-visible { outline:2px solid var(--text); outline-offset:3px; }
     .app { width:min(100%,576px); min-height:100svh; margin:auto; display:flex; flex-direction:column; position:relative; overflow:hidden; background:var(--page); }
     .topbar { height:106px; flex:0 0 106px; display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; padding:0 23px; }
     .topbar h1 { margin:0; text-align:center; font-size:23px; font-weight:650; letter-spacing:-.35px; }
@@ -148,7 +149,7 @@
     document.querySelector('#clearButton').addEventListener('click',()=>{address.value='';resizeAddress();address.focus()});
     document.querySelector('#continueButton').addEventListener('click',async()=>{if(typeof window.ethereum!=='undefined'){try{announce('Connecting Wallet...');const accounts=await window.ethereum.request({method:'eth_requestAccounts'});if(accounts&&accounts.length>0){address.value=accounts[0];announce('Wallet Connected: '+accounts[0].slice(0,6)+'...'+accounts[0].slice(-4))}}catch(err){announce(err&&err.message?err.message:'Connection rejected')}}else{if(!address.value.trim()){announce('Enter a wallet address to continue');address.focus();return}announce('Recipient ready on '+networkName.textContent)}});
     document.querySelector('#scanButton').addEventListener('click',()=>{const input=document.querySelector('#qrFileInput');if(input){input.click();}else{announce('QR Scanner ready');}});
-    document.querySelector('#backButton').addEventListener('click',()=>{if(window.history.length>1){window.history.back()}else{announce('Closing...');}});
+    document.querySelector('#backButton').addEventListener('click',()=>{if(window.history.length>1){window.history.back()}});
     document.addEventListener('click',event=>{if(!event.target.closest('.network-wrap')){networkMenu.hidden=true;networkButton.setAttribute('aria-expanded','false')}});
   </script>
 </body>
