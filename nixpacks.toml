@@ -1,9 +1,0 @@
-[phases.build]
-cmds = ["npm install"]
-
-[phases.start]
-cmd = "npm start"
-
-[static]
-# Serve static files from current directory
-guest = "/app"

@@ -1,253 +1,131 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#0b0d14" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
-    <title>Send Crypto</title>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=13">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1018" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
+  <title>Send to</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      --page: #0d1018;
+      --panel: #11141e;
+      --raised: #242732;
+      --raised-hover: #303440;
+      --line: #292d3a;
+      --text: #f7f7fb;
+      --text-muted: #686e7d;
+      --purple: #493bff;
+      --icon-btn: #1c202c;
+      --icon-btn-hover: #292d3a;
+      --panel-border: #2b3040;
+      --chevron: #a6aab5;
+      --menu-bg: #1b1f2b;
+      --menu-hover: #2a2e3b;
+      --bottom-border: #242833;
+      --toast-bg: #222632;
+      --toast-border: #373c49;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --page: #f8f9fc;
+        --panel: #ffffff;
+        --raised: #f1f3f9;
+        --raised-hover: #e2e6f0;
+        --line: #e2e8f0;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --purple: #493bff;
+        --icon-btn: #f1f3f9;
+        --icon-btn-hover: #e2e6f0;
+        --panel-border: #e2e8f0;
+        --chevron: #64748b;
+        --menu-bg: #ffffff;
+        --menu-hover: #f1f3f9;
+        --bottom-border: #e2e8f0;
+        --toast-bg: #0f172a;
+        --toast-border: #1e293b;
+      }
+    }
+    * { box-sizing:border-box; }
+    html,body { width:100%; min-height:100%; margin:0; }
+    body { min-height:100svh; background:var(--page); color:var(--text); }
+    button,textarea { font:inherit; color:inherit; }
+    button { cursor:pointer; }
+    .app { width:min(100%,576px); min-height:100svh; margin:auto; display:flex; flex-direction:column; position:relative; overflow:hidden; background:var(--page); }
+    .topbar { height:106px; flex:0 0 106px; display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; padding:0 23px; }
+    .topbar h1 { margin:0; text-align:center; font-size:23px; font-weight:650; letter-spacing:-.35px; }
+    .icon-button { width:62px; height:62px; display:grid; place-items:center; border:0; border-radius:50%; background:var(--icon-btn); color:var(--text); transition:background .18s,transform .18s; }
+    .icon-button:hover { background:var(--icon-btn-hover); }
+    .icon-button:active { transform:scale(.96); }
+    .close { font-size:40px; font-weight:300; line-height:1; margin-top:-4px; }
+    #scanButton { justify-self: end; }
+    .scan-icon { width:25px; height:25px; }
+    .address-panel { margin:0 23px; min-height:201px; padding:24px 23px 20px; border:1.5px solid var(--panel-border); border-radius:23px; box-shadow:inset 0 0 0 1px #ffffff03; }
+    .address-input { display:block; width:100%; min-height:76px; max-height:118px; resize:none; overflow-y:auto; padding:0; border:0; outline:0; background:transparent; color:var(--text); font-size:21px; font-weight:640; line-height:1.5; overflow-wrap:anywhere; caret-color:#756aff; }
+    .address-input::placeholder { color:var(--text-muted); }
+    .panel-controls { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:24px; }
+    .network-wrap { position:relative; }
+    .network-button,.clear-button { min-height:51px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:0 15px; border:0; border-radius:28px; background:var(--raised); color:var(--text); font-size:19px; font-weight:620; transition:background .18s,transform .18s; }
+    .network-button:hover,.clear-button:hover { background:var(--raised-hover); }
+    .network-button:active,.clear-button:active { transform:scale(.97); }
+    .eth-icon { width:24px; height:24px; display:grid; place-items:center; border-radius:50%; background:transparent; overflow:hidden; }
+    .eth-icon img, .network-dot img { width:100%; height:100%; object-fit:contain; border-radius:50%; display:block; }
+    .chevron { width:0; height:0; margin-left:1px; border-left:7px solid transparent; border-right:7px solid transparent; border-top:8px solid var(--chevron); }
+    .clear-button { min-width:108px; }
+    .network-menu { position:absolute; z-index:4; left:0; bottom:calc(100% + 10px); width:218px; padding:7px; border:1px solid var(--line); border-radius:19px; background:var(--menu-bg); box-shadow:0 16px 45px #00000033; }
+    .network-menu[hidden] { display:none; }
+    .network-option { width:100%; padding:12px 11px; display:flex; align-items:center; gap:10px; text-align:left; border:0; border-radius:12px; background:transparent; color:var(--text); font-size:16px; }
+    .network-option:hover,.network-option[aria-selected="true"] { background:var(--menu-hover); }
+    .network-dot { width:23px; height:23px; display:grid; place-items:center; border-radius:50%; background:transparent; overflow:hidden; }
+    .spacer { flex:1; min-height:30px; }
+    .bottom { flex:0 0 auto; padding:23px 23px max(13px,env(safe-area-inset-bottom)); border-top:1px solid var(--bottom-border); }
+    .continue-button { width:100%; height:80px; border:0; border-radius:50px; background:var(--purple); color:white; font-size:22px; font-weight:650; letter-spacing:-.2px; box-shadow:0 5px 16px #382aff2b; transition:filter .18s,transform .18s; }
+    .continue-button:hover { filter:brightness(1.12); }
+    .continue-button:active { transform:scale(.99); }
+    .toast { position:absolute; z-index:5; left:50%; bottom:139px; max-width:calc(100% - 44px); transform:translate(-50%,10px); padding:12px 17px; border:1px solid var(--toast-border); border-radius:14px; background:var(--toast-bg); color:#ffffff; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; white-space:nowrap; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    @media(max-width:420px) { .topbar { padding:0 18px; } .address-panel { margin:0 18px; padding-left:19px; padding-right:19px; } .address-input { font-size:18px; } .bottom { padding-left:18px; padding-right:18px; } .network-button,.clear-button { font-size:17px; } }
+  </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- ================= SCREEN 1: SEND TO (ADDRESS SCREEN) ================= -->
-        <div class="screen-step active" id="stepAddress">
-            <!-- Top Navigation Header -->
-            <header class="app-header">
-                <button class="header-icon-btn" id="closeBtn" aria-label="Close">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                <h1 class="header-title">Send to</h1>
-                <button class="header-icon-btn scanner-btn-anim" id="scanQrBtn" aria-label="Scan QR Code" title="Scan QR Code">
-                    <svg class="custom-scan-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M5 8a1 1 0 0 1-2 0V5.923c0-.76.082-1.185.319-1.627.223-.419.558-.754.977-.977C4.738 3.082 5.162 3 5.923 3H8a1 1 0 0 1 0 2H5.923c-.459 0-.57.022-.684.082a.364.364 0 0 0-.157.157c-.06.113-.082.225-.082.684V8zm3 11a1 1 0 1 1 0 2H5.923c-.76 0-1.185-.082-1.627-.319a2.363 2.363 0 0 1-.977-.977C3.082 19.262 3 18.838 3 18.077V16a1 1 0 1 1 2 0v2.077c0 .459.022.57.082.684.038.07.087.12.157.157.113.06.225.082.684.082H8zm7-15a1 1 0 0 0 1 1h2.077c.459 0 .57.022.684.082.07.038.12.087.157.157.06.113.082.225.082.684V8a1 1 0 1 0 2 0V5.923c0-.76-.082-1.185-.319-1.627a2.363 2.363 0 0 0-.977-.977C19.262 3.082 18.838 3 18.077 3H16a1 1 0 0 0-1 1zm4 12a1 1 0 1 1 2 0v2.077c0 .76-.082 1.185-.319 1.627a2.364 2.364 0 0 1-.977.977c-.442.237-.866.319-1.627.319H16a1 1 0 1 1 0-2h2.077c.459 0 .57-.022.684-.082a.363.363 0 0 0 .157-.157c.06-.113.082-.225.082-.684V16zM3 11a1 1 0 1 0 0 2h18a1 1 0 1 0 0-2H3z" fill="currentColor"></path>
-                        </g>
-                    </svg>
-                </button>
-            </header>
-
-            <!-- Main Form Body -->
-            <main class="app-body">
-                <div class="send-card">
-                    <div class="address-input-container">
-                        <textarea id="addressInput" rows="2" placeholder="Paste or enter address" spellcheck="false" aria-label="Receiver Address">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</textarea>
-                    </div>
-
-                    <div class="send-card-footer">
-                        <div class="network-select-wrapper">
-                            <div class="network-pill-btn static-pill">
-                                <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB Logo" class="bnb-pill-logo">
-                                <span>BNB Smart Chain</span>
-                            </div>
-                        </div>
-                        <button class="clear-btn" id="clearBtn">Clear</button>
-                    </div>
-                </div>
-            </main>
-
-            <!-- Bottom Fixed Footer for Continue Button Container -->
-            <footer class="app-footer">
-                <div class="square-container-card">
-                    <button class="btn-continue" id="continueBtn">Continue</button>
-                </div>
-            </footer>
+  <main class="app">
+    <header class="topbar">
+      <button class="icon-button" id="backButton" aria-label="Go back"><span class="close" aria-hidden="true">×</span></button>
+      <h1>Send to</h1>
+      <button class="icon-button" id="scanButton" aria-label="Scan QR code"><svg class="scan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/><path d="M7 12h10"/></svg></button>
+    </header>
+    <section class="address-panel" aria-label="Recipient address and network">
+      <label class="sr-only" for="address">Wallet address</label>
+      <textarea class="address-input" id="address" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="addressHint">0x3b659063c41015a06D25B933742D0Bd28A04E490</textarea>
+      <span class="sr-only" id="addressHint">Enter the wallet address to send to.</span>
+      <div class="panel-controls">
+        <div class="network-wrap">
+          <button class="network-button" id="networkButton" aria-haspopup="listbox" aria-expanded="false"><span class="eth-icon" aria-hidden="true"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt="BSC"></span><span id="networkName">BSC</span><span class="chevron" aria-hidden="true"></span></button>
+          <div class="network-menu" id="networkMenu" role="listbox" aria-label="Choose network" hidden>
+            <button class="network-option" role="option" aria-selected="true" data-network="BSC"><span class="network-dot"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt="BSC"></span>BSC</button>
+          </div>
         </div>
-
-        <!-- ================= SCREEN 2: AMOUNT SCREEN ================= -->
-        <div class="screen-step" id="stepAmount">
-            <!-- Amount Screen Header -->
-            <header class="app-header">
-                <button class="header-icon-btn" id="backToAddressBtn" aria-label="Back">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <h1 class="header-title">Amount</h1>
-                <div style="width: 42px;"></div>
-            </header>
-
-            <!-- Destination Subheader with HR Lines Above & Below -->
-            <hr class="divider-line">
-            <div class="to-address-banner">
-                <span class="to-label">To:</span>
-                <span class="to-address-text" id="displayToAddress">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</span>
-            </div>
-            <hr class="divider-line">
-
-            <!-- Main Amount Input & Fiat Display Area -->
-            <div class="amount-display-area">
-                <div class="amount-crypto-val" id="displayCryptoVal">0</div>
-                <div class="amount-fiat-val" id="displayFiatVal">
-                    ≈ ₹0.00
-                    <svg class="custom-convert-arrows-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                            <g>
-                                <path fill="none" d="M0 0h24v24H0z"></path>
-                                <path d="M12 8H8.001L8 20H6V8H2l5-5 5 5zm10 8l-5 5-5-5h4V4h2v12h4z"></path>
-                            </g>
-                        </g>
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Unified Bottom Container Card (USDT Logo + Keypad + Review Button) -->
-            <div class="bottom-unified-card">
-                <!-- Token Balance Row & Max Button -->
-                <div class="token-balance-row">
-                    <div class="token-info-left">
-                        <div class="token-icon-wrapper">
-                            <img src="https://static.cdnlogo.com/logos/t/60/tether.svg" alt="Tether USDT" class="usdt-token-logo">
-                            <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB" class="token-chain-badge">
-                        </div>
-                        <div class="token-details">
-                            <span class="token-balance-crypto">2 USDT</span>
-                            <span class="token-balance-fiat">₹192.45</span>
-                        </div>
-                    </div>
-                    <button class="max-btn" id="maxBtn">Max</button>
-                </div>
-
-                <!-- On-Screen Numeric Keypad -->
-                <div class="keypad-grid">
-                    <button class="keypad-btn" data-key="1">1</button>
-                    <button class="keypad-btn" data-key="2">2</button>
-                    <button class="keypad-btn" data-key="3">3</button>
-
-                    <button class="keypad-btn" data-key="4">4</button>
-                    <button class="keypad-btn" data-key="5">5</button>
-                    <button class="keypad-btn" data-key="6">6</button>
-
-                    <button class="keypad-btn" data-key="7">7</button>
-                    <button class="keypad-btn" data-key="8">8</button>
-                    <button class="keypad-btn" data-key="9">9</button>
-
-                    <button class="keypad-btn" data-key=".">.</button>
-                    <button class="keypad-btn" data-key="0">0</button>
-                    <button class="keypad-btn backspace-key" id="keypadDelete"><i class="fa-solid fa-delete-left"></i></button>
-                </div>
-
-                <!-- Review Button inside Unified Container -->
-                <div class="inner-review-wrapper">
-                    <button class="btn-continue btn-review-disabled" id="reviewBtn">Review</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= SCREEN 3: REVIEW SEND SCREEN ================= -->
-        <div class="screen-step" id="stepReview">
-            <!-- Review Screen Header -->
-            <header class="app-header">
-                <button class="header-icon-btn" id="backToAmountBtn" aria-label="Back">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <h1 class="header-title">Review Send</h1>
-                <button class="header-icon-btn" id="settingsBtn" aria-label="Settings">
-                    <i class="fa-solid fa-sliders"></i>
-                </button>
-            </header>
-
-            <main class="review-body">
-                <!-- Section 1: Amount Card -->
-                <div class="review-section">
-                    <span class="review-section-label">Amount</span>
-                    <div class="review-card row-card">
-                        <div class="token-icon-wrapper">
-                            <img src="https://static.cdnlogo.com/logos/t/60/tether.svg" alt="Tether USDT" class="usdt-token-logo">
-                            <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB" class="token-chain-badge">
-                        </div>
-                        <div class="review-amount-text">
-                            <span class="review-crypto-num" id="reviewCryptoVal">1 USDT</span>
-                            <span class="review-fiat-num" id="reviewFiatVal">≈ ₹96.22</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 2: Details Card -->
-                <div class="review-section">
-                    <span class="review-section-label">Details</span>
-                    <div class="review-card column-card">
-                        <div class="detail-row">
-                            <span class="detail-label">From</span>
-                            <span class="detail-val-text">Main Wallet</span>
-                        </div>
-
-                        <div class="detail-row">
-                            <span class="detail-label">To</span>
-                            <span class="detail-val-address" id="reviewToAddress">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</span>
-                        </div>
-
-                        <div class="detail-row">
-                            <span class="detail-label">Network</span>
-                            <span class="detail-val-network">
-                                <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB" class="review-bnb-icon">
-                                <span>BNB Smart Chain</span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 3: Network Fee Card -->
-                <div class="review-section">
-                    <div class="review-section-header-row">
-                        <span class="review-section-label">Network fee <i class="fa-solid fa-circle-info info-icon"></i></span>
-                        <span class="sponsored-badge"><i class="fa-solid fa-bolt"></i> Sponsored</span>
-                    </div>
-                    <div class="review-card row-card flex-between">
-                        <div class="network-fee-left">
-                            <img src="https://files.svgcdn.io/token-branded/bnb.png" alt="BNB" class="review-bnb-fee-icon">
-                            <span class="fee-token-name">BNB</span>
-                        </div>
-                        <div class="network-fee-right">
-                            <span class="fee-fiat-num">₹0.00</span>
-                            <span class="fee-crypto-num">0 BNB</span>
-                        </div>
-                    </div>
-                </div>
-            </main>
-
-            <!-- Bottom Action Footer for Send Button -->
-            <footer class="app-footer">
-                <div class="square-container-card">
-                    <button class="btn-continue btn-send-vibrant" id="sendBtn">Send</button>
-                </div>
-            </footer>
-        </div>
-    </div>
-
-    <!-- Scanner Viewfinder Overlay / Modal -->
-    <div class="scanner-modal" id="scannerModal">
-        <div class="scanner-header">
-            <span><i class="fa-solid fa-qrcode"></i> Scan QR Code</span>
-            <button class="scanner-close-btn" id="closeScannerBtn">&times;</button>
-        </div>
-        <div class="viewfinder-container">
-            <div class="viewfinder-box">
-                <div class="laser-scan-line"></div>
-                <div class="corner top-left"></div>
-                <div class="corner top-right"></div>
-                <div class="corner bottom-left"></div>
-                <div class="corner bottom-right"></div>
-                <i class="fa-solid fa-camera camera-center-icon"></i>
-            </div>
-            <p class="scanner-instruction">Align QR code inside the frame to scan</p>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div class="toast" id="toast">
-        <i class="fa-solid fa-circle-check"></i>
-        <span id="toastMsg"></span>
-    </div>
-
-    <script src="script.js?v=13"></script>
+        <button class="clear-button" id="clearButton" type="button">Clear</button>
+      </div>
+    </section>
+    <div class="spacer"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <footer class="bottom"><button class="continue-button" id="continueButton" type="button">Continue</button></footer>
+  </main>
+  <script>
+    const address=document.querySelector('#address'),networkButton=document.querySelector('#networkButton'),networkMenu=document.querySelector('#networkMenu'),networkName=document.querySelector('#networkName'),ethIcon=document.querySelector('.eth-icon'),toast=document.querySelector('#toast');let toastTimer;
+    function announce(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
+    networkButton.addEventListener('click',()=>{const open=networkButton.getAttribute('aria-expanded')==='true';networkButton.setAttribute('aria-expanded',String(!open));networkMenu.hidden=open});
+    document.querySelectorAll('.network-option').forEach(option=>option.addEventListener('click',()=>{networkName.textContent=option.dataset.network;const dot=option.querySelector('.network-dot');if(dot&&ethIcon){ethIcon.innerHTML=dot.innerHTML;ethIcon.style.background=dot.style.background||'linear-gradient(145deg,#f3ba2f,#f0b90b)';ethIcon.style.color=dot.style.color||'#fff'}document.querySelectorAll('.network-option').forEach(item=>item.setAttribute('aria-selected',String(item===option)));networkMenu.hidden=true;networkButton.setAttribute('aria-expanded','false')}));
+    document.querySelector('#clearButton').addEventListener('click',()=>{address.value='';address.focus()});
+    document.querySelector('#continueButton').addEventListener('click',()=>{if(!address.value.trim()){announce('Enter a wallet address to continue');address.focus();return}announce('Recipient ready on '+networkName.textContent)});
+    document.querySelector('#scanButton').addEventListener('click',()=>announce('QR scanner is ready'));
+    document.querySelector('#backButton').addEventListener('click',()=>announce('You’re on the Send to page'));
+    document.addEventListener('click',event=>{if(!event.target.closest('.network-wrap')){networkMenu.hidden=true;networkButton.setAttribute('aria-expanded','false')}});
+  </script>
 </body>
 </html>

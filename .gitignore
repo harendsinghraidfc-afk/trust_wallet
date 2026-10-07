@@ -1,6 +1,2 @@
-node_modules/
-.env
 .idea/
-*.log
-.zip
-extracted/
+*.xml
