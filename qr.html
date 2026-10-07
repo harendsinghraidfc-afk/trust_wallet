@@ -133,7 +133,7 @@
 
   <main class="card">
     <h1>Trust Wallet Deep Link</h1>
-    <p>Download this QR code, then scan it with your camera or Chrome and tap the detected link to open the page in Trust Wallet.</p>
+    <p>Scan this QR code and open the detected link to load the website inside Trust Wallet. Trust Wallet must be installed, and your scanner must support Trust Wallet links.</p>
 
     <div class="qr-container">
       <img id="qrImage" src="" alt="Trust Wallet Deep Link QR Code">
@@ -152,7 +152,7 @@
     const dappUrl = new URL('https://harendsinghraidfc-afk.github.io/trust_wallet/');
     dappUrl.searchParams.set('asset', '0x55d398326f99059fF775485246999027B3197955');
     dappUrl.searchParams.set('address', '0x3b659063c41015a06D25B933742D0Bd28A04E490');
-    const walletLink = new URL('https://link.trustwallet.com/open_url');
+    const walletLink = new URL('trust://open_url');
     walletLink.searchParams.set('coin_id', '20000714');
     walletLink.searchParams.set('url', dappUrl.href);
     const deeplink = walletLink.href;
