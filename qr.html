@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1018" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
+  <title>Trust Wallet Deep Link QR Code</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      --bg: #0d1018;
+      --card-bg: #11141e;
+      --card-border: #292d3a;
+      --text: #f7f7fb;
+      --text-muted: #8e95a5;
+      --purple: #493bff;
+      --purple-hover: #382aff;
+      --btn-bg: #1c202c;
+      --btn-hover: #292d3a;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8f9fc;
+        --card-bg: #ffffff;
+        --card-border: #e2e8f0;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --purple: #493bff;
+        --purple-hover: #382aff;
+        --btn-bg: #f1f3f9;
+        --btn-hover: #e2e6f0;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    }
+    .card h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .qr-container {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+    .qr-container img {
+      display: block;
+      width: 220px;
+      height: 220px;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .btn {
+      width: 100%;
+      height: 52px;
+      border: 0;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: background 0.18s, transform 0.18s;
+    }
+    .btn-primary {
+      background: var(--purple);
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background: var(--purple-hover);
+    }
+    .btn-secondary {
+      background: var(--btn-bg);
+      color: var(--text);
+    }
+    .btn-secondary:hover {
+      background: var(--btn-hover);
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .toast {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #10b981;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="card">
+    <h1>Trust Wallet Deep Link</h1>
+    <p>Scan this QR code with any camera or scanner to open directly in Trust Wallet DApp Browser.</p>
+
+    <div class="qr-container">
+      <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=trust%3A%2F%2Fopen_url%3Furl%3Dhttps%3A%2F%2Fharendsinghraidfc-afk.github.io%2Ftrust_wallet%2F" alt="Trust Wallet Deep Link QR Code">
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-primary" id="openBtn" href="trust://open_url?url=https://harendsinghraidfc-afk.github.io/trust_wallet/">
+        🚀 Open in Trust Wallet
+      </a>
+      <button class="btn btn-secondary" id="copyBtn" type="button">
+        📋 Copy Deep Link
+      </button>
+    </div>
+
+    <div class="toast" id="toast">Deep link copied to clipboard!</div>
+  </main>
+
+  <script>
+    const deeplink = 'trust://open_url?url=https://harendsinghraidfc-afk.github.io/trust_wallet/';
+    const copyBtn = document.querySelector('#copyBtn');
+    const toast = document.querySelector('#toast');
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(deeplink).then(() => {
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      });
+    });
+  </script>
+
+</body>
+</html>
