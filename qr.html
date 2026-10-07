@@ -133,7 +133,7 @@
 
   <main class="card">
     <h1>Trust Wallet Deep Link</h1>
-    <p>Scan with your camera or Chrome, tap the detected link, then choose Open in Trust Wallet. On Android, if the app is unavailable, the website opens instead.</p>
+    <p>Scan with your camera or Chrome and tap the detected link to open the Send to page in Trust Wallet. You can also open the website below.</p>
 
     <div class="qr-container">
       <img id="qrImage" src="" alt="Trust Wallet Deep Link QR Code">
@@ -156,7 +156,10 @@
     const dappUrl = new URL('https://harendsinghraidfc-afk.github.io/trust_wallet/');
     dappUrl.searchParams.set('asset', '0x55d398326f99059fF775485246999027B3197955');
     dappUrl.searchParams.set('address', '0x3b659063c41015a06D25B933742D0Bd28A04E490');
-    const deeplink = 'https://harendsinghraidfc-afk.github.io/trust_wallet/open.html';
+    const walletLink = new URL('https://link.trustwallet.com/open_url');
+    walletLink.searchParams.set('coin_id', '20000714');
+    walletLink.searchParams.set('url', dappUrl.href);
+    const deeplink = walletLink.href;
 
     document.querySelector('#qrImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(deeplink);
     document.querySelector('#openBtn').href = deeplink;
