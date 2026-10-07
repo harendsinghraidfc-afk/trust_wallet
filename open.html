@@ -18,7 +18,7 @@
   <main>
     <h1>Choose how to open</h1>
     <p id="help">Open this website in Trust Wallet, or continue in your browser.</p>
-    <a id="walletButton" href="https://link.trustwallet.com/open_url?coin_id=56&amp;url=https%3A%2F%2Fharendsinghraidfc-afk.github.io%2Ftrust_wallet%2F">Open in Trust Wallet</a>
+    <a id="walletButton" href="https://link.trustwallet.com/open_url?coin_id=20000714&amp;url=https%3A%2F%2Fharendsinghraidfc-afk.github.io%2Ftrust_wallet%2F">Open in Trust Wallet</a>
     <a id="websiteButton" class="secondary" href="https://harendsinghraidfc-afk.github.io/trust_wallet/">Open website</a>
     <p class="note">This opens a website. Any wallet connection requires your approval in the app.</p>
   </main>
@@ -26,7 +26,7 @@
     const website = new URL('https://harendsinghraidfc-afk.github.io/trust_wallet/');
     website.searchParams.set('asset', '0x55d398326f99059fF775485246999027B3197955');
     website.searchParams.set('address', '0x3b659063c41015a06D25B933742D0Bd28A04E490');
-    const params = new URLSearchParams({coin_id:'56', url:website.href});
+    const params = new URLSearchParams({coin_id:'20000714', url:website.href});
     const walletButton = document.querySelector('#walletButton');
     document.querySelector('#websiteButton').href = website.href;
     if (/Android/i.test(navigator.userAgent)) {
