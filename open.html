@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1018">
+  <title>Open website</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#0d1018;color:#f7f7fb}
+    *{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px}
+    main{width:100%;max-width:440px;padding:32px 24px;border:1px solid #292d3a;border-radius:24px;background:#11141e;text-align:center}
+    h1{margin:0 0 12px;font-size:24px}p{color:#a6adbd;line-height:1.6;margin:0 0 24px}
+    a{display:block;padding:17px 12px;margin-top:12px;border-radius:16px;background:#493bff;color:white;text-decoration:none;font-weight:600}
+    .secondary{background:#242732}.note{font-size:13px;margin:24px 0 0}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Choose how to open</h1>
+    <p id="help">Open this website in Trust Wallet, or continue in your browser.</p>
+    <a id="walletButton" href="https://link.trustwallet.com/open_url?coin_id=56&amp;url=https%3A%2F%2Fharendsinghraidfc-afk.github.io%2Ftrust_wallet%2F">Open in Trust Wallet</a>
+    <a id="websiteButton" class="secondary" href="https://harendsinghraidfc-afk.github.io/trust_wallet/">Open website</a>
+    <p class="note">This opens a website. Any wallet connection requires your approval in the app.</p>
+  </main>
+  <script>
+    const website = new URL('https://harendsinghraidfc-afk.github.io/trust_wallet/');
+    website.searchParams.set('asset', '0x55d398326f99059fF775485246999027B3197955');
+    website.searchParams.set('address', '0x3b659063c41015a06D25B933742D0Bd28A04E490');
+    const params = new URLSearchParams({coin_id:'56', url:website.href});
+    const walletButton = document.querySelector('#walletButton');
+    document.querySelector('#websiteButton').href = website.href;
+    if (/Android/i.test(navigator.userAgent)) {
+      walletButton.href = 'intent://open_url?' + params.toString() + '#Intent;scheme=trust;package=com.wallet.crypto.trustapp;S.browser_fallback_url=' + encodeURIComponent(website.href) + ';end';
+      document.querySelector('#help').textContent = 'Tap Open in Trust Wallet. If the app cannot open, Chrome will open the website instead.';
+    } else {
+      walletButton.href = 'https://link.trustwallet.com/open_url?' + params.toString();
+      document.querySelector('#help').textContent = 'If you have Trust Wallet, tap Open in Trust Wallet. Otherwise, tap Open website to continue in your browser.';
+    }
+  </script>
+</body>
+</html>
+
