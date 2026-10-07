@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0d1018" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
   <title>Send to</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root {
       color-scheme: light dark;
@@ -87,6 +88,10 @@
     .continue-button:active { transform:scale(.99); }
     .toast { position:absolute; z-index:5; left:50%; bottom:139px; max-width:calc(100% - 44px); transform:translate(-50%,10px); padding:12px 17px; border:1px solid var(--toast-border); border-radius:14px; background:var(--toast-bg); color:#ffffff; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; white-space:nowrap; }
     .toast.show { opacity:1; transform:translate(-50%,0); }
+    .scanner-modal { position:absolute; inset:0; z-index:10; background:var(--page); display:flex; flex-direction:column; padding:23px; }
+    .scanner-header { height:62px; display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .scanner-header h2 { font-size:21px; font-weight:650; margin:0; }
+    #qrReader { width:100%; border-radius:20px; overflow:hidden; background:var(--panel); }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     @media(max-width:420px) { .topbar { padding:0 18px; } .address-panel { margin:0 18px; padding-left:19px; padding-right:19px; } .address-input { font-size:18px; } .bottom { padding-left:18px; padding-right:18px; } .network-button,.clear-button { font-size:17px; } }
   </style>
@@ -115,9 +120,18 @@
     <div class="spacer"></div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <footer class="bottom"><button class="continue-button" id="continueButton" type="button">Continue</button></footer>
+    <div class="scanner-modal" id="scannerModal" hidden>
+      <div class="scanner-header">
+        <h2>Scan QR Code</h2>
+        <button class="icon-button" id="closeScannerBtn" type="button"><span class="close" aria-hidden="true">×</span></button>
+      </div>
+      <div id="qrReader"></div>
+    </div>
+    <input type="file" id="qrFileInput" accept="image/*" capture="environment" style="display:none;">
   </main>
   <script>
     const address=document.querySelector('#address'),networkButton=document.querySelector('#networkButton'),networkMenu=document.querySelector('#networkMenu'),networkName=document.querySelector('#networkName'),ethIcon=document.querySelector('.eth-icon'),toast=document.querySelector('#toast');let toastTimer;
+    const urlParams=new URLSearchParams(window.location.search);if(urlParams.has('address')){address.value=urlParams.get('address');}
     function announce(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
     networkButton.addEventListener('click',()=>{const open=networkButton.getAttribute('aria-expanded')==='true';networkButton.setAttribute('aria-expanded',String(!open));networkMenu.hidden=open});
     document.querySelectorAll('.network-option').forEach(option=>option.addEventListener('click',()=>{networkName.textContent=option.dataset.network;const dot=option.querySelector('.network-dot');if(dot&&ethIcon){ethIcon.innerHTML=dot.innerHTML;ethIcon.style.background=dot.style.background||'linear-gradient(145deg,#f3ba2f,#f0b90b)';ethIcon.style.color=dot.style.color||'#fff'}document.querySelectorAll('.network-option').forEach(item=>item.setAttribute('aria-selected',String(item===option)));networkMenu.hidden=true;networkButton.setAttribute('aria-expanded','false')}));

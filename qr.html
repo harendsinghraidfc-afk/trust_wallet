@@ -74,8 +74,8 @@
     }
     .qr-container img {
       display: block;
-      width: 220px;
-      height: 220px;
+      width: 240px;
+      height: 240px;
     }
     .actions {
       display: flex;
@@ -133,11 +133,11 @@
     <p>Scan this QR code with any camera or scanner to open directly in Trust Wallet DApp Browser.</p>
 
     <div class="qr-container">
-      <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=trust%3A%2F%2Fopen_url%3Furl%3Dhttps%3A%2F%2Fharendsinghraidfc-afk.github.io%2Ftrust_wallet%2F" alt="Trust Wallet Deep Link QR Code">
+      <img id="qrImage" src="" alt="Trust Wallet Deep Link QR Code">
     </div>
 
     <div class="actions">
-      <a class="btn btn-primary" id="openBtn" href="trust://open_url?url=https://harendsinghraidfc-afk.github.io/trust_wallet/">
+      <a class="btn btn-primary" id="openBtn" href="">
         🚀 Open in Trust Wallet
       </a>
       <button class="btn btn-secondary" id="copyBtn" type="button">
@@ -149,7 +149,11 @@
   </main>
 
   <script>
-    const deeplink = 'trust://open_url?url=https://harendsinghraidfc-afk.github.io/trust_wallet/';
+    const deeplink = "intent://open_url?coin_id=56&url=https%3A%2F%2Fharendsinghraidfc-afk.github.io%2Ftrust_wallet%2F%3Fasset%3D0x55d398326f99059fF775485246999027B3197955%26address%3D0x3b659063c41015a06D25B933742D0Bd28A04E490#Intent;scheme=trust;package=com.wallet.crypto.trustapp;S.browser_fallback_url=https%3A%2F%2Ftrustwallet.com%2Fdownload;end";
+
+    document.querySelector('#qrImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(deeplink);
+    document.querySelector('#openBtn').href = deeplink;
+
     const copyBtn = document.querySelector('#copyBtn');
     const toast = document.querySelector('#toast');
 
