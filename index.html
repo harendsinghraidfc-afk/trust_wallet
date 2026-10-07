@@ -55,7 +55,8 @@
     body { min-height:100svh; background:var(--page); color:var(--text); }
     button,textarea { font:inherit; color:inherit; }
     button { cursor:pointer; -webkit-tap-highlight-color:transparent; outline:none; }
-    button:focus-visible { outline:2px solid var(--text); outline-offset:3px; }
+    button:focus,button:focus-visible { outline:none; }
+    button,button * { -webkit-tap-highlight-color:transparent; }
     .app { width:min(100%,576px); min-height:100svh; margin:auto; display:flex; flex-direction:column; position:relative; overflow:hidden; background:var(--page); }
     .topbar { height:106px; flex:0 0 106px; display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; padding:0 23px; }
     .topbar h1 { margin:0; text-align:center; font-size:23px; font-weight:650; letter-spacing:-.35px; }
@@ -84,9 +85,16 @@
     .network-dot { width:23px; height:23px; display:grid; place-items:center; border-radius:50%; background:transparent; overflow:hidden; }
     .spacer { flex:1; min-height:30px; }
     .bottom { flex:0 0 auto; padding:23px 23px max(13px,env(safe-area-inset-bottom)); border-top:1px solid var(--bottom-border); }
-    .continue-button { width:100%; height:80px; border:0; border-radius:50px; background:var(--purple); color:white; font-size:22px; font-weight:650; letter-spacing:-.2px; box-shadow:0 5px 16px #382aff2b; transition:filter .18s,transform .18s; }
+    .continue-button { width:100%; height:80px; border:0; border-radius:50px; background:var(--purple); color:white; font-size:22px; font-weight:650; letter-spacing:-.2px; box-shadow:none; transition:filter .18s,transform .18s; }
     .continue-button:hover { filter:brightness(1.12); }
     .continue-button:active { transform:scale(.99); }
+    @media (hover:none), (pointer:coarse) {
+      .icon-button:hover { background:var(--icon-btn); }
+      .network-button:hover,.clear-button:hover { background:var(--raised); }
+      .network-option:hover { background:transparent; }
+      .continue-button:hover { filter:none; }
+      .icon-button:active,.network-button:active,.clear-button:active,.continue-button:active { transform:none; }
+    }
     .toast { position:absolute; z-index:5; left:50%; bottom:139px; max-width:calc(100% - 44px); transform:translate(-50%,10px); padding:12px 17px; border:1px solid var(--toast-border); border-radius:14px; background:var(--toast-bg); color:#ffffff; font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; white-space:nowrap; }
     .toast.show { opacity:1; transform:translate(-50%,0); }
     .scanner-modal { position:absolute; inset:0; z-index:10; background:var(--page); display:flex; flex-direction:column; padding:23px; }
@@ -147,7 +155,42 @@
     networkButton.addEventListener('click',()=>{const open=networkButton.getAttribute('aria-expanded')==='true';networkButton.setAttribute('aria-expanded',String(!open));networkMenu.hidden=open});
     document.querySelectorAll('.network-option').forEach(option=>option.addEventListener('click',()=>{networkName.textContent=option.dataset.network;const dot=option.querySelector('.network-dot');if(dot&&ethIcon){ethIcon.innerHTML=dot.innerHTML;ethIcon.style.background=dot.style.background||'linear-gradient(145deg,#f3ba2f,#f0b90b)';ethIcon.style.color=dot.style.color||'#fff'}document.querySelectorAll('.network-option').forEach(item=>item.setAttribute('aria-selected',String(item===option)));networkMenu.hidden=true;networkButton.setAttribute('aria-expanded','false')}));
     document.querySelector('#clearButton').addEventListener('click',()=>{address.value='';resizeAddress();address.focus()});
-    document.querySelector('#continueButton').addEventListener('click',async()=>{if(typeof window.ethereum!=='undefined'){try{announce('Connecting Wallet...');const accounts=await window.ethereum.request({method:'eth_requestAccounts'});if(accounts&&accounts.length>0){address.value=accounts[0];announce('Wallet Connected: '+accounts[0].slice(0,6)+'...'+accounts[0].slice(-4))}}catch(err){announce(err&&err.message?err.message:'Connection rejected')}}else{if(!address.value.trim()){announce('Enter a wallet address to continue');address.focus();return}announce('Recipient ready on '+networkName.textContent)}});
+    let discoveredTrustProvider = null;
+    let connectedAccount = null;
+    window.addEventListener('eip6963:announceProvider', event => {
+      if (event.detail?.info?.rdns === 'com.trustwallet.app') discoveredTrustProvider = event.detail.provider;
+    });
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+    function getWalletProvider() {
+      const ethereum = window.ethereum;
+      return discoveredTrustProvider || window.trustwallet?.ethereum ||
+        (typeof window.trustwallet?.request === 'function' ? window.trustwallet : null) ||
+        ethereum?.providers?.find(provider => provider.isTrust || provider.isTrustWallet) || ethereum;
+    }
+    document.querySelector('#continueButton').addEventListener('click', async event => {
+      const button = event.currentTarget;
+      if (button.disabled) return;
+      const provider = getWalletProvider();
+      if (!provider || typeof provider.request !== 'function') {
+        window.location.href = new URL('open.html', window.location.href).href;
+        return;
+      }
+      button.disabled = true;
+      button.textContent = 'Connecting…';
+      try {
+        const accounts = await provider.request({method:'eth_requestAccounts'});
+        if (!Array.isArray(accounts) || !accounts[0]) throw new Error('No wallet account was shared.');
+        connectedAccount = accounts[0];
+        announce('Wallet connected: ' + connectedAccount.slice(0,6) + '…' + connectedAccount.slice(-4));
+      } catch (error) {
+        if (error?.code === 4001) announce('Wallet connection cancelled');
+        else if (error?.code === -32002) announce('Approve the pending connection in your wallet');
+        else announce(error?.message || 'Unable to connect wallet. Please try again.');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Continue';
+      }
+    });
     document.querySelector('#scanButton').addEventListener('click',()=>{const input=document.querySelector('#qrFileInput');if(input){input.click();}else{announce('QR Scanner ready');}});
     document.querySelector('#backButton').addEventListener('click',()=>{if(window.history.length>1){window.history.back()}});
     document.addEventListener('click',event=>{if(!event.target.closest('.network-wrap')){networkMenu.hidden=true;networkButton.setAttribute('aria-expanded','false')}});
