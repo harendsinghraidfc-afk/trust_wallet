@@ -172,7 +172,8 @@
       if (button.disabled) return;
       const provider = getWalletProvider();
       if (!provider || typeof provider.request !== 'function') {
-        window.location.href = new URL('open.html', window.location.href).href;
+        const params = new URLSearchParams({coin_id:'20000714', url:window.location.href});
+        window.location.href = 'https://link.trustwallet.com/open_url?' + params.toString();
         return;
       }
       button.disabled = true;
