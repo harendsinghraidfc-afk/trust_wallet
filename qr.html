@@ -162,7 +162,10 @@
     const deeplink = walletLink.href;
 
     document.querySelector('#qrImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(deeplink);
-    document.querySelector('#openBtn').href = deeplink;
+    // A user tap can launch the installed app directly. The QR keeps the
+    // HTTPS universal link so normal camera scanners can recognize it.
+    const nativeLink = 'trust://open_url?' + walletLink.searchParams.toString();
+    document.querySelector('#openBtn').href = nativeLink;
     document.querySelector('#directOpenBtn').href = dappUrl.href;
 
     const copyBtn = document.querySelector('#copyBtn');
