@@ -133,23 +133,19 @@
 
   <main class="card">
     <h1>Trust Wallet Deep Link</h1>
-    <p>Scan with your camera or Chrome and tap the detected link to open the Send to page in Trust Wallet. You can also open the website below.</p>
+    <p>Download this QR code, then scan it with your camera or Chrome and tap the detected link to open the page in Trust Wallet.</p>
 
     <div class="qr-container">
       <img id="qrImage" src="" alt="Trust Wallet Deep Link QR Code">
     </div>
 
     <div class="actions">
-      <a class="btn btn-primary" id="openBtn" href="">
-        🚀 Open in Trust Wallet
-      </a>
-      <button class="btn btn-secondary" id="copyBtn" type="button">
-        📋 Copy Deep Link
+      <button class="btn btn-primary" id="downloadBtn" type="button">
+        Download QR Code
       </button>
-      <a class="btn btn-secondary" id="directOpenBtn" href="">Open website</a>
     </div>
 
-    <div class="toast" id="toast" role="status" aria-live="polite">Deep link copied to clipboard!</div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </main>
 
   <script>
@@ -161,22 +157,33 @@
     walletLink.searchParams.set('url', dappUrl.href);
     const deeplink = walletLink.href;
 
-    document.querySelector('#qrImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(deeplink);
-    // A user tap can launch the installed app directly. The QR keeps the
-    // HTTPS universal link so normal camera scanners can recognize it.
-    const nativeLink = 'trust://open_url?' + walletLink.searchParams.toString();
-    document.querySelector('#openBtn').href = nativeLink;
-    document.querySelector('#directOpenBtn').href = dappUrl.href;
+    const qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=png&data=' + encodeURIComponent(deeplink);
+    document.querySelector('#qrImage').src = qrImageUrl;
 
-    const copyBtn = document.querySelector('#copyBtn');
+    const downloadBtn = document.querySelector('#downloadBtn');
     const toast = document.querySelector('#toast');
 
-    copyBtn.addEventListener('click', async () => {
+    downloadBtn.addEventListener('click', async () => {
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = 'Downloading…';
       try {
-        await navigator.clipboard.writeText(deeplink);
-        toast.textContent = 'Deep link copied to clipboard!';
+        const response = await fetch(qrImageUrl);
+        if (!response.ok) throw new Error('QR download failed');
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = 'trust-wallet-qr.png';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000);
+        toast.textContent = 'QR code download started.';
       } catch (error) {
-        toast.textContent = 'Copy unavailable. Open the Trust Wallet link using the button above.';
+        toast.textContent = 'Download failed. Please try again.';
+      } finally {
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = 'Download QR Code';
       }
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 3000);
