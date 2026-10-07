@@ -29,7 +29,8 @@
     const params = new URLSearchParams({coin_id:'20000714', url:website.href});
     const walletButton = document.querySelector('#walletButton');
     document.querySelector('#websiteButton').href = website.href;
-    if (/Android/i.test(navigator.userAgent)) {
+    const isAndroidChrome = /Android/i.test(navigator.userAgent) && /Chrome\//i.test(navigator.userAgent) && !/\bwv\b|Version\/4\.0|Trust/i.test(navigator.userAgent);
+    if (isAndroidChrome) {
       walletButton.href = 'intent://open_url?' + params.toString() + '#Intent;scheme=trust;package=com.wallet.crypto.trustapp;S.browser_fallback_url=' + encodeURIComponent(website.href) + ';end';
       document.querySelector('#help').textContent = 'Tap Open in Trust Wallet. If the app cannot open, Chrome will open the website instead.';
     } else {
