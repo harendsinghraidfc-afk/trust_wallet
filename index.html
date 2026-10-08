@@ -128,7 +128,7 @@
     .bsc-badge { position:absolute; right:-2px; bottom:-2px; width:18px; height:18px; display:grid; place-items:center; border-radius:50%; background:#161921; border:2px solid var(--page); color:#f0b90b; font-size:11px; }
     .token-info { flex:1; min-width:0; }
     .token-balance { font-size:17px; overflow-wrap:anywhere; }
-    .connection-note { margin-top:4px; font-size:12px; color:var(--text-muted); }
+    .balance-usd { margin-top:4px; font-size:12px; color:var(--text-muted); }
     .max-button { border:0; background:var(--icon-btn); border-radius:28px; padding:13px 18px; font-size:16px; font-weight:650; }
     .max-button:disabled { opacity:.45; cursor:default; }
     .keypad { flex-shrink:0; display:grid; grid-template-columns:repeat(3,1fr); padding:0 12px 4px; }
@@ -194,10 +194,7 @@
     .usdt-icon { width:38px; height:38px; }
     .bsc-badge { width:16px; height:16px; right:-2px; bottom:-2px; border-width:1.5px; }
     .token-balance { font-size:16px; }
-    .balance-status { display:flex; align-items:center; gap:8px; }
-    .balance-refresh { padding:0; border:0; background:transparent; color:var(--text-muted); min-width:28px; height:28px; font-size:19px; }
-    .balance-refresh:disabled { opacity:.45; }
-    .connection-note { margin-top:0; font-size:11px; }
+    .balance-usd { margin-top:5px; font-size:12px; }
     .max-button { padding:11px 16px; font-size:15px; }
     .keypad button { height:clamp(42px,calc(var(--viewport-height,100dvh) * .075),56px); font-size:24px; }
     .amount-footer,.flow-footer { padding:10px 16px max(10px,env(safe-area-inset-bottom)); }
@@ -246,11 +243,11 @@
       <div class="amount-recipient"><span>To:</span><strong id="amountRecipient"></strong></div>
       <div class="amount-entry">
         <output class="amount-value zero" id="amountValue" aria-label="Amount in USDT" aria-live="polite">0</output>
-        <div class="amount-unit">USDT on BSC</div>
+        <div class="amount-unit" id="amountUsd" title="Calculated at 1 USDT = 1 USD">$0.00 USD</div>
       </div>
       <div class="token-row">
         <div class="usdt-icon" aria-hidden="true"><img src="https://upload.wikimedia.org/wikipedia/commons/0/01/USDT_Logo.png" alt=""><span class="bsc-badge"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt=""></span></div>
-        <div class="token-info"><div class="token-balance" id="tokenBalance">Loading balance…</div><div class="balance-status"><div class="connection-note" id="connectionNote">Connected • BSC</div><button class="balance-refresh" id="balanceRefresh" type="button" aria-label="Refresh wallet balance" title="Refresh wallet balance">↻</button></div></div>
+        <div class="token-info"><div class="token-balance" id="tokenBalance">Loading balance…</div><div class="balance-usd" id="balanceUsd" title="Calculated at 1 USDT = 1 USD">— USD</div></div>
         <button class="max-button" id="maxButton" type="button" disabled>Max</button>
       </div>
       <div class="keypad" aria-label="Amount keypad">
@@ -335,10 +332,17 @@
       const fraction = digits.slice(-tokenDecimals).replace(/0+$/, '');
       return digits.slice(0, -tokenDecimals) + (fraction ? '.' + fraction : '');
     }
+    function formatUsd(units) {
+      // Fixed display rate requested by the user: 1 USDT = 1 USD.
+      const scale = 10n ** BigInt(tokenDecimals);
+      const cents = (units * 100n + scale / 2n) / scale;
+      return '$' + (cents / 100n).toString() + '.' + (cents % 100n).toString().padStart(2, '0') + ' USD';
+    }
     function updateAmount() {
       const output = document.querySelector('#amountValue');
       output.textContent = amountText;
       output.classList.toggle('zero', tokenUnits(amountText) === 0n);
+      document.querySelector('#amountUsd').textContent = formatUsd(tokenUnits(amountText));
       document.querySelector('#reviewButton').disabled = !connectedAccount || tokenBalance === null || tokenUnits(amountText) <= 0n || tokenUnits(amountText) > tokenBalance;
     }
     function leaveAmount() {
@@ -351,11 +355,10 @@
       document.querySelector('.app').classList.remove('amount-mode');
       document.title = 'Send to';
     }
-    async function showAmount(provider, recipient, resetAmount = true) {
+    async function showAmount(provider, recipient) {
       amountProvider = provider;
-      if (resetAmount) { amountText = '0'; tokenDecimals = 18; }
+      amountText = '0'; tokenDecimals = 18;
       tokenBalance = null;
-      document.querySelector('#balanceRefresh').disabled = true;
       if (typeof provider.on === 'function' && !watchedProviders.has(provider)) {
         watchedProviders.add(provider);
         const invalidateAmount = () => {
@@ -374,8 +377,7 @@
       document.querySelector('#amountRecipient').textContent = recipient;
       document.querySelector('#tokenBalance').textContent = 'Loading balance…';
       document.querySelector('#maxButton').disabled = true;
-      document.querySelector('#connectionNote').textContent = 'Connected • BSC';
-      document.querySelector('#connectionNote').title = connectedAccount;
+      document.querySelector('#balanceUsd').textContent = '— USD';
       amountScreen.hidden = false;
       document.querySelector('.app').classList.add('amount-mode');
       document.title = 'Amount';
@@ -393,22 +395,16 @@
         if (!Number.isInteger(tokenDecimals) || tokenDecimals < 0 || tokenDecimals > 36) throw new Error('Invalid token decimals');
         tokenBalance = BigInt(balanceHex);
         document.querySelector('#tokenBalance').textContent = formatTokenUnits(tokenBalance) + ' USDT';
+        document.querySelector('#balanceUsd').textContent = formatUsd(tokenBalance);
         document.querySelector('#maxButton').disabled = tokenBalance === 0n;
       } catch (error) {
         if (requestId !== balanceRequestId) return;
         tokenBalance = null;
         document.querySelector('#tokenBalance').textContent = 'Could not load balance';
-        document.querySelector('#connectionNote').textContent = 'Tap ↻ to retry';
+        document.querySelector('#balanceUsd').textContent = '— USD';
       }
-      document.querySelector('#balanceRefresh').disabled = false;
       updateAmount();
     }
-    document.querySelector('#balanceRefresh').addEventListener('click', async () => {
-      try {
-        await verifyWallet();
-        await showAmount(amountProvider, document.querySelector('#amountRecipient').textContent, false);
-      } catch(error) { leaveAmount(); announce(error.message || 'Connect your wallet again.'); }
-    });
     document.querySelector('#amountBack').addEventListener('click', leaveAmount);
     document.querySelectorAll('[data-key]').forEach(key => key.addEventListener('click', () => {
       const value = key.dataset.key;
@@ -606,7 +602,6 @@
         await ensureBscNetwork(provider);
         connectedAccount = accounts[0];
         if (!/^0x[0-9a-fA-F]{40}$/.test(connectedAccount)) throw new Error('Invalid wallet account.');
-        announce('Connected on BSC: ' + connectedAccount.slice(0,6) + '…' + connectedAccount.slice(-4));
         await showAmount(provider, recipient);
       } catch (error) {
         if (error?.code === 4001) announce('Wallet connection cancelled');
