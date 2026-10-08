@@ -35,13 +35,14 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
       background: var(--bg);
       color: var(--text);
       padding: clamp(12px, 4vw, 24px);
+      overflow-x: hidden;
     }
     .card {
       width: 100%;
@@ -93,6 +94,7 @@
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -126,6 +128,12 @@
     }
     .toast.show {
       opacity: 1;
+    }
+    @media(max-height:560px) {
+      body { align-items:flex-start; }
+      .card { padding:20px 16px; border-radius:20px; }
+      .card p { margin-bottom:16px; }
+      .qr-container { width:min(100%,220px); margin-bottom:16px; }
     }
   </style>
 </head>
@@ -165,7 +173,7 @@
       downloadBtn.disabled = true;
       downloadBtn.textContent = 'Downloading…';
       try {
-        const response = await fetch(qrImageUrl);
+        const response = await fetch(qrImageUrl, {signal:AbortSignal.timeout(15000)});
         if (!response.ok) throw new Error('QR download failed');
         const blob = await response.blob();
         const downloadUrl = URL.createObjectURL(blob);
