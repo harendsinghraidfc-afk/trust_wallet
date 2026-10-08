@@ -165,6 +165,8 @@
     .detail-list dd { margin:6px 0 0; font-size:14px; font-weight:600; line-height:1.4; overflow-wrap:anywhere; }
     .fee-card { display:flex; justify-content:space-between; align-items:center; gap:14px; font-size:15px; }
     .fee-card strong { text-align:right; overflow-wrap:anywhere; }
+    .fee-token { display:flex; align-items:center; gap:8px; }
+    .fee-token img { width:22px; height:22px; object-fit:contain; }
     .review-network { display:flex; align-items:center; gap:7px; }
     .review-network img { width:20px; height:20px; object-fit:contain; flex-shrink:0; }
     .flow-message { padding:12px 14px; border-radius:14px; background:#f0b90b14; color:var(--text); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
@@ -268,8 +270,7 @@
         <p class="section-label">Details</p>
         <div class="summary-card"><dl class="detail-list"><dt>From</dt><dd id="reviewFrom">Main Wallet</dd><dt>To</dt><dd id="reviewTo"></dd><dt>Network</dt><dd class="review-network"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt="BSC"><span>BNB Smart Chain</span></dd></dl></div>
         <p class="section-label">Estimated network fee</p>
-        <div class="summary-card fee-card"><span>BNB</span><strong id="reviewFee">Calculating…</strong></div>
-        <button class="text-action" id="retryFee" type="button">Refresh balance and fee</button>
+        <div class="summary-card fee-card"><span class="fee-token"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt="BSC"><span>BNB</span></span><strong id="reviewFee">Calculating…</strong></div>
       </div>
       <footer class="flow-footer"><p class="flow-message" id="reviewMessage">Confirm the amount and recipient. Trust Wallet will ask you to approve this transfer.</p><button class="continue-button" id="sendButton" type="button" disabled>Send</button></footer>
     </section>
@@ -471,20 +472,23 @@
         ]);
         if (requestId !== reviewRequestId) return;
         if (units > BigInt(balanceHex)) throw new Error('Insufficient USDT balance. Choose a smaller amount.');
-        if (BigInt(bnbHex) === 0n) throw new Error('Insufficient BNB balance for the network fee. Add BNB to your wallet.');
-        const gas = BigInt(await readBsc(amountProvider,'eth_estimateGas',[tx]));
+        // A read-only estimate uses zero gas price so the node can simulate
+        // token execution without requiring a funded BNB balance. The real
+        // current gas price is used for the displayed fee and balance check.
+        const gas = BigInt(await readBsc(amountProvider,'eth_estimateGas',[{...tx, gasPrice:'0x0'}]));
         const gasLimit = (gas * 120n + 99n) / 100n;
         const gasPrice = BigInt(priceHex), maxFee = gasLimit * gasPrice;
+        if (gas <= 0n || gasPrice <= 0n) throw new Error('Could not calculate the network fee.');
         await verifyWallet();
         if (requestId !== reviewRequestId) return;
-        document.querySelector('#reviewFee').textContent = '≈ ' + formatBnb(maxFee) + ' BNB';
-        if (BigInt(bnbHex) < maxFee) throw new Error('Insufficient BNB balance for the network fee. Add BNB to your wallet.');
-        reviewedTransfer = {account, recipient, units, tx, requestId};
+        document.querySelector('#reviewFee').textContent = '≈ ' + formatBnb(gas * gasPrice) + ' BNB';
         document.querySelector('#reviewMessage').textContent = 'Confirm the amount and recipient. Trust Wallet will show the final fee before approval.';
+        if (BigInt(bnbHex) < maxFee) return;
+        reviewedTransfer = {account, recipient, units, tx, requestId};
         button.disabled = false;
       } catch(error) {
         if (requestId !== reviewRequestId) return;
-        document.querySelector('#reviewFee').textContent = 'Unavailable';
+        document.querySelector('#reviewFee').textContent = 'Could not estimate';
         document.querySelector('#reviewMessage').textContent = error.message || 'Unable to prepare transfer. Please retry.';
       }
     }
@@ -504,7 +508,6 @@
       document.title = 'Review Send';
       await prepareReview();
     });
-    document.querySelector('#retryFee').addEventListener('click', prepareReview);
     document.querySelector('#reviewBack').addEventListener('click', () => { reviewRequestId++; reviewedTransfer = null; reviewScreen.hidden = true; amountScreen.hidden = false; document.title = 'Amount'; });
     document.querySelector('#sendButton').addEventListener('click', async () => {
       if (sendPending || !reviewedTransfer) return;
@@ -664,4 +667,5 @@
   </script>
 </body>
 </html>
+
 
