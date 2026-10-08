@@ -165,6 +165,8 @@
     .detail-list dd { margin:6px 0 0; font-size:14px; font-weight:600; line-height:1.4; overflow-wrap:anywhere; }
     .fee-card { display:flex; justify-content:space-between; align-items:center; gap:14px; font-size:15px; }
     .fee-card strong { text-align:right; overflow-wrap:anywhere; }
+    .review-network { display:flex; align-items:center; gap:7px; }
+    .review-network img { width:20px; height:20px; object-fit:contain; flex-shrink:0; }
     .flow-message { padding:12px 14px; border-radius:14px; background:#f0b90b14; color:var(--text); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
     .flow-footer { flex-shrink:0; border-top:1px solid var(--line); padding:12px 18px max(12px,env(safe-area-inset-bottom)); }
     .flow-footer .continue-button { height:56px; font-size:18px; }
@@ -262,9 +264,9 @@
       <header class="topbar"><button class="icon-button" id="reviewBack" aria-label="Back to amount">‹</button><h1>Review Send</h1></header>
       <div class="flow-body">
         <p class="section-label">Amount</p>
-        <div class="summary-card summary-token"><div class="usdt-icon" aria-hidden="true"><img src="https://upload.wikimedia.org/wikipedia/commons/0/01/USDT_Logo.png" alt=""><span class="bsc-badge"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt=""></span></div><div><strong id="reviewAmount"></strong><div class="summary-subtitle">USDT • BNB Smart Chain</div></div></div>
+        <div class="summary-card summary-token"><div class="usdt-icon" aria-hidden="true"><img src="https://upload.wikimedia.org/wikipedia/commons/0/01/USDT_Logo.png" alt=""><span class="bsc-badge"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt=""></span></div><div><strong id="reviewAmount"></strong><div class="summary-subtitle" id="reviewUsd" title="Calculated at 1 USDT = 1 USD"></div></div></div>
         <p class="section-label">Details</p>
-        <div class="summary-card"><dl class="detail-list"><dt>From</dt><dd id="reviewFrom"></dd><dt>To</dt><dd id="reviewTo"></dd><dt>Network</dt><dd>BNB Smart Chain</dd></dl></div>
+        <div class="summary-card"><dl class="detail-list"><dt>From</dt><dd id="reviewFrom">Main Wallet</dd><dt>To</dt><dd id="reviewTo"></dd><dt>Network</dt><dd class="review-network"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt="BSC"><span>BNB Smart Chain</span></dd></dl></div>
         <p class="section-label">Estimated network fee</p>
         <div class="summary-card fee-card"><span>BNB</span><strong id="reviewFee">Calculating…</strong></div>
         <button class="text-action" id="retryFee" type="button">Refresh balance and fee</button>
@@ -490,7 +492,9 @@
       updateAmount();
       if (document.querySelector('#reviewButton').disabled) return;
       document.querySelector('#reviewAmount').textContent = amountText + ' USDT';
-      document.querySelector('#reviewFrom').textContent = connectedAccount;
+      document.querySelector('#reviewFrom').textContent = 'Main Wallet';
+      document.querySelector('#reviewFrom').title = connectedAccount;
+      document.querySelector('#reviewUsd').textContent = formatUsd(tokenUnits(amountText));
       document.querySelector('#reviewTo').textContent = document.querySelector('#amountRecipient').textContent;
       document.activeElement?.blur();
       amountScreen.hidden = true; reviewScreen.hidden = false;
