@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#0d1018" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
   <title>Send to</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root {
       color-scheme: light dark;
@@ -138,10 +137,41 @@
     .amount-footer .continue-button { height:56px; font-size:18px; }
     @media(max-height:560px) { .amount-screen .topbar { height:56px; flex-basis:56px; } .amount-entry { min-height:70px; } .keypad button { height:42px; } }
     .continue-button:disabled { background:var(--icon-btn); color:var(--text-muted); cursor:default; filter:none; }
-    .review-dialog { width:min(90%,480px); border:1px solid var(--line); border-radius:24px; padding:24px; background:var(--page); color:var(--text); }
-    .review-dialog::backdrop { background:#0009; }
-    .review-dialog p { overflow-wrap:anywhere; line-height:1.5; }
-    .review-dialog button { width:100%; border:0; border-radius:28px; background:var(--purple); color:white; padding:16px; font-size:18px; }
+    [hidden] { display:none !important; }
+    .app { min-height:var(--viewport-height,100dvh); }
+    .app:not(.amount-mode) { height:var(--viewport-height,100dvh); overflow-y:auto; }
+    .topbar { height:80px; flex-basis:80px; padding:0 18px; grid-template-columns:52px minmax(0,1fr) 52px; }
+    .topbar h1 { font-size:20px; white-space:nowrap; }
+    .icon-button { width:48px; height:48px; }
+    .address-panel { margin:0 18px; padding:18px; min-height:175px; }
+    .address-input { font-size:18px; }
+    .panel-controls { margin-top:16px; }
+    .bottom { padding:14px 18px max(12px,env(safe-area-inset-bottom)); }
+    .bottom .continue-button { height:60px; font-size:19px; }
+    .amount-screen { overflow-y:auto; }
+    .flow-screen { height:100%; min-height:0; display:flex; flex-direction:column; }
+    .flow-screen .topbar { height:72px; flex-basis:72px; }
+    .flow-body { flex:1; min-height:0; overflow-y:auto; padding:8px 18px 20px; }
+    .section-label { margin:16px 0 9px; font-size:14px; color:var(--text-muted); }
+    .summary-card { background:var(--icon-btn); border-radius:20px; padding:18px; }
+    .summary-token { display:flex; align-items:center; gap:12px; }
+    .summary-token strong { font-size:20px; overflow-wrap:anywhere; }
+    .summary-subtitle { font-size:13px; color:var(--text-muted); margin-top:5px; }
+    .detail-list { margin:0; }
+    .detail-list dt { margin-top:19px; color:var(--text-muted); font-size:13px; }
+    .detail-list dt:first-child { margin-top:0; }
+    .detail-list dd { margin:7px 0 0; font-size:16px; font-weight:600; line-height:1.45; overflow-wrap:anywhere; }
+    .fee-card { display:flex; justify-content:space-between; align-items:center; gap:14px; font-size:15px; }
+    .fee-card strong { text-align:right; overflow-wrap:anywhere; }
+    .flow-message { padding:12px 14px; border-radius:14px; background:#f0b90b14; color:var(--text); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+    .flow-footer { flex-shrink:0; border-top:1px solid var(--line); padding:12px 18px max(12px,env(safe-area-inset-bottom)); }
+    .flow-footer .continue-button { height:56px; font-size:18px; }
+    .flow-footer .flow-message { margin:0 0 10px; }
+    .approval-intro { font-size:16px; line-height:1.5; text-align:center; padding:8px 8px 18px; }
+    .transaction-link { display:block; margin-top:18px; color:var(--purple); overflow-wrap:anywhere; }
+    .text-action { border:0; background:transparent; color:var(--purple); font-size:14px; padding:8px 0; }
+    .amount-value { font-size:clamp(24px,7vw,48px); }
+    @media(max-height:460px) { .topbar,.flow-screen .topbar { height:56px; flex-basis:56px; } .amount-entry { min-height:65px; } .keypad button { height:38px; } }
     @media(max-width:420px) { .topbar { padding:0 18px; } .address-panel { margin:0 18px; padding-left:19px; padding-right:19px; } .address-input { font-size:18px; } .bottom { padding-left:18px; padding-right:18px; } .network-button,.clear-button { font-size:17px; } }
   </style>
 </head>
@@ -192,7 +222,24 @@
       </div>
       <footer class="amount-footer"><button class="continue-button" id="reviewButton" type="button" disabled>Review</button></footer>
     </section>
-    <dialog class="review-dialog" id="reviewDialog"><h2>Review amount</h2><p id="reviewDetails"></p><p>No transfer has been submitted.</p><button id="closeReview" type="button">Back to amount</button></dialog>
+    <section class="flow-screen" id="reviewScreen" aria-label="Review Send" hidden>
+      <header class="topbar"><button class="icon-button" id="reviewBack" aria-label="Back to amount">‹</button><h1>Review Send</h1></header>
+      <div class="flow-body">
+        <p class="section-label">Amount</p>
+        <div class="summary-card summary-token"><div class="usdt-icon" aria-hidden="true">₮<span class="bsc-badge">◆</span></div><div><strong id="reviewAmount"></strong><div class="summary-subtitle">USDT • BNB Smart Chain</div></div></div>
+        <p class="section-label">Details</p>
+        <div class="summary-card"><dl class="detail-list"><dt>From</dt><dd id="reviewFrom"></dd><dt>To</dt><dd id="reviewTo"></dd><dt>Network</dt><dd>BNB Smart Chain</dd><dt>Token contract</dt><dd id="reviewContract"></dd></dl></div>
+        <p class="section-label">Estimated network fee</p>
+        <div class="summary-card fee-card"><span>BNB</span><strong id="reviewFee">Calculating…</strong></div>
+        <button class="text-action" id="retryFee" type="button">Refresh balance and fee</button>
+      </div>
+      <footer class="flow-footer"><p class="flow-message" id="reviewMessage">Confirm the amount and recipient. Trust Wallet will ask you to approve this transfer.</p><button class="continue-button" id="sendButton" type="button" disabled>Send</button></footer>
+    </section>
+    <section class="flow-screen" id="approvalScreen" aria-label="Wallet confirmation" hidden>
+      <header class="topbar"><button class="icon-button" id="approvalBack" aria-label="Back to review" disabled>‹</button><h1 id="approvalTitle">Confirm in wallet</h1></header>
+      <div class="flow-body"><p class="approval-intro" id="approvalStatus" role="status" aria-live="polite">Open Trust Wallet and review its approval request.</p><div class="summary-card"><dl class="detail-list"><dt>Amount</dt><dd id="approvalAmount"></dd><dt>From</dt><dd id="approvalFrom"></dd><dt>To</dt><dd id="approvalTo"></dd><dt>Contract address</dt><dd id="approvalContract"></dd><dt>Network</dt><dd>BNB Smart Chain</dd><dt>Website</dt><dd id="approvalWebsite"></dd></dl></div><a class="transaction-link" id="transactionLink" target="_blank" rel="noopener noreferrer" hidden>View transaction on BscScan</a></div>
+      <footer class="flow-footer"><p class="flow-message" id="approvalMessage">Only approve if the recipient and amount match. No transfer is sent until you approve in Trust Wallet.</p><button class="continue-button" id="approvalDone" type="button" disabled>Waiting for Trust Wallet…</button></footer>
+    </section>
     <div class="scanner-modal" id="scannerModal" hidden>
       <div class="scanner-header">
         <h2>Scan QR Code</h2>
@@ -228,6 +275,9 @@
     let connectedAccount = null;
     let amountText = '0', tokenDecimals = 18, tokenBalance = null, amountProvider = null;
     let balanceRequestId = 0;
+    let reviewRequestId = 0, reviewedTransfer = null, sendPending = false;
+    const reviewScreen = document.querySelector('#reviewScreen');
+    const approvalScreen = document.querySelector('#approvalScreen');
     const watchedProviders = new WeakSet();
     const amountScreen = document.querySelector('#amountScreen');
     function fitViewport() {
@@ -255,7 +305,10 @@
     function leaveAmount() {
       balanceRequestId++;
       amountScreen.hidden = true;
-      document.querySelector('#reviewDialog').close();
+      reviewRequestId++;
+      reviewedTransfer = null;
+      reviewScreen.hidden = true;
+      approvalScreen.hidden = true;
       document.querySelector('.app').classList.remove('amount-mode');
       document.title = 'Send to';
     }
@@ -265,10 +318,11 @@
       if (typeof provider.on === 'function' && !watchedProviders.has(provider)) {
         watchedProviders.add(provider);
         const invalidateAmount = () => {
-          if (amountProvider !== provider || amountScreen.hidden) return;
+          if (amountProvider !== provider || (amountScreen.hidden && reviewScreen.hidden && approvalScreen.hidden)) return;
           connectedAccount = null;
           tokenBalance = null;
-          leaveAmount();
+          if (!sendPending) leaveAmount();
+          else document.querySelector('#approvalMessage').textContent = 'Wallet changed. Check the active request in Trust Wallet before approving.';
           announce('Wallet changed. Connect on BSC again.');
         };
         provider.on('accountsChanged', invalidateAmount);
@@ -288,8 +342,8 @@
       try {
         const account = connectedAccount;
         const [decimalsHex, balanceHex] = await Promise.all([
-          provider.request({method:'eth_call', params:[{to:walletConfig.asset, data:'0x313ce567'}, 'latest']}),
-          provider.request({method:'eth_call', params:[{to:walletConfig.asset, data:'0x70a08231' + account.slice(2).padStart(64,'0')}, 'latest']})
+          readBsc(provider, 'eth_call', [{to:walletConfig.asset, data:'0x313ce567'}, 'latest']),
+          readBsc(provider, 'eth_call', [{to:walletConfig.asset, data:'0x70a08231' + account.slice(2).padStart(64,'0')}, 'latest'])
         ]);
         if (requestId !== balanceRequestId) return;
         if (!isBscChain(await provider.request({method:'eth_chainId'}))) throw new Error('Network changed');
@@ -315,14 +369,137 @@
       updateAmount();
     }));
     document.querySelector('#maxButton').addEventListener('click', () => { if (tokenBalance !== null) { amountText = formatTokenUnits(tokenBalance); updateAmount(); } });
-    document.querySelector('#reviewButton').addEventListener('click', async () => {
+    async function readBsc(provider, method, params) {
+      // Only read methods are allowed through the public BSC fallback.
+      if (!['eth_call','eth_getBalance','eth_gasPrice','eth_estimateGas','eth_getTransactionReceipt'].includes(method)) throw new Error('Unsupported read method');
+      let providerTimeout;
       try {
-        if (!isBscChain(await amountProvider.request({method:'eth_chainId'}))) { leaveAmount(); announce('Network changed. Connect on BSC again.'); return; }
-        document.querySelector('#reviewDetails').textContent = amountText + ' USDT on BSC to ' + document.querySelector('#amountRecipient').textContent;
-        document.querySelector('#reviewDialog').showModal();
-      } catch (error) { announce('Unable to verify wallet network.'); }
+        const result = await Promise.race([
+          provider.request({method, params}),
+          new Promise((_, reject) => { providerTimeout = setTimeout(() => reject(new Error('Wallet read timed out')), 5000); })
+        ]);
+        if (method === 'eth_getTransactionReceipt') return result;
+        if (typeof result === 'string' && /^0x[0-9a-f]+$/i.test(result)) return result;
+      } catch (error) { /* Mobile wallet providers may omit read-only RPC methods. */ }
+      finally { clearTimeout(providerTimeout); }
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      try {
+        const response = await fetch('https://bsc-dataseed.bnbchain.org', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({jsonrpc:'2.0', id:1, method, params}), signal:controller.signal});
+        if (!response.ok) throw new Error('BSC network unavailable');
+        const payload = await response.json();
+        if (payload.error) throw new Error(payload.error.message || 'BSC request failed');
+        return payload.result;
+      } finally { clearTimeout(timeout); }
+    }
+    function formatBnb(wei) {
+      const padded = wei.toString().padStart(19,'0');
+      return padded.slice(0,-18) + '.' + padded.slice(-18,-8).replace(/0+$/, '').padEnd(1,'0');
+    }
+    async function verifyWallet() {
+      if (!connectedAccount || !isBscChain(await amountProvider.request({method:'eth_chainId'}))) throw new Error('Connect your wallet on BSC again.');
+      const accounts = await amountProvider.request({method:'eth_accounts'});
+      if (!accounts?.some(account => account.toLowerCase() === connectedAccount.toLowerCase())) throw new Error('Wallet account changed. Connect again.');
+    }
+    function transferTransaction(account, recipient, units) {
+      if (!/^0x[0-9a-fA-F]{40}$/.test(recipient) || units <= 0n || units >= 2n**256n) throw new Error('Invalid transfer');
+      return {from:account, to:walletConfig.asset, value:'0x0', data:'0xa9059cbb' + recipient.slice(2).toLowerCase().padStart(64,'0') + units.toString(16).padStart(64,'0')};
+    }
+    async function prepareReview() {
+      const requestId = ++reviewRequestId;
+      reviewedTransfer = null;
+      const button = document.querySelector('#sendButton');
+      button.disabled = true;
+      document.querySelector('#reviewFee').textContent = 'Calculating…';
+      document.querySelector('#reviewMessage').textContent = 'Checking your balance and network fee…';
+      try {
+        await verifyWallet();
+        const account = connectedAccount, recipient = document.querySelector('#amountRecipient').textContent;
+        const units = tokenUnits(amountText);
+        const tx = transferTransaction(account, recipient, units);
+        const [balanceHex, bnbHex, priceHex] = await Promise.all([
+          readBsc(amountProvider,'eth_call',[{to:walletConfig.asset,data:'0x70a08231'+account.slice(2).padStart(64,'0')},'latest']),
+          readBsc(amountProvider,'eth_getBalance',[account,'latest']),
+          readBsc(amountProvider,'eth_gasPrice',[])
+        ]);
+        if (requestId !== reviewRequestId) return;
+        if (units > BigInt(balanceHex)) throw new Error('Insufficient USDT balance. Choose a smaller amount.');
+        if (BigInt(bnbHex) === 0n) throw new Error('Insufficient BNB balance for the network fee. Add BNB to your wallet.');
+        const gas = BigInt(await readBsc(amountProvider,'eth_estimateGas',[tx]));
+        const gasLimit = (gas * 120n + 99n) / 100n;
+        const gasPrice = BigInt(priceHex), maxFee = gasLimit * gasPrice;
+        await verifyWallet();
+        if (requestId !== reviewRequestId) return;
+        document.querySelector('#reviewFee').textContent = '≈ ' + formatBnb(maxFee) + ' BNB';
+        if (BigInt(bnbHex) < maxFee) throw new Error('Insufficient BNB balance for the network fee. Add BNB to your wallet.');
+        reviewedTransfer = {account, recipient, units, tx, requestId};
+        document.querySelector('#reviewMessage').textContent = 'Confirm the amount and recipient. Trust Wallet will show the final fee before approval.';
+        button.disabled = false;
+      } catch(error) {
+        if (requestId !== reviewRequestId) return;
+        document.querySelector('#reviewFee').textContent = 'Unavailable';
+        document.querySelector('#reviewMessage').textContent = error.message || 'Unable to prepare transfer. Please retry.';
+      }
+    }
+    document.querySelector('#reviewButton').addEventListener('click', async () => {
+      updateAmount();
+      if (document.querySelector('#reviewButton').disabled) return;
+      document.querySelector('#reviewAmount').textContent = amountText + ' USDT';
+      document.querySelector('#reviewFrom').textContent = connectedAccount;
+      document.querySelector('#reviewTo').textContent = document.querySelector('#amountRecipient').textContent;
+      document.querySelector('#reviewContract').textContent = walletConfig.asset;
+      amountScreen.hidden = true; reviewScreen.hidden = false;
+      clearTimeout(toastTimer); toast.classList.remove('show');
+      document.title = 'Review Send';
+      await prepareReview();
     });
-    document.querySelector('#closeReview').addEventListener('click', () => document.querySelector('#reviewDialog').close());
+    document.querySelector('#retryFee').addEventListener('click', prepareReview);
+    document.querySelector('#reviewBack').addEventListener('click', () => { reviewRequestId++; reviewedTransfer = null; reviewScreen.hidden = true; amountScreen.hidden = false; document.title = 'Amount'; });
+    document.querySelector('#sendButton').addEventListener('click', async () => {
+      if (sendPending || !reviewedTransfer) return;
+      const transfer = reviewedTransfer;
+      sendPending = true;
+      document.querySelector('#sendButton').disabled = true;
+      try {
+        await verifyWallet();
+        if (reviewRequestId !== transfer.requestId || reviewedTransfer !== transfer) throw new Error('Transfer details changed. Review again.');
+        const balance = BigInt(await readBsc(amountProvider,'eth_call',[{to:walletConfig.asset,data:'0x70a08231'+transfer.account.slice(2).padStart(64,'0')},'latest']));
+        if (balance < transfer.units) throw new Error('USDT balance changed. Review again.');
+        await verifyWallet();
+        if (reviewRequestId !== transfer.requestId || reviewedTransfer !== transfer) throw new Error('Transfer details changed. Review again.');
+        document.querySelector('#approvalAmount').textContent = formatTokenUnits(transfer.units) + ' USDT';
+        document.querySelector('#approvalFrom').textContent = transfer.account;
+        document.querySelector('#approvalTo').textContent = transfer.recipient;
+        document.querySelector('#approvalContract').textContent = walletConfig.asset;
+        document.querySelector('#approvalWebsite').textContent = window.location.host;
+        document.querySelector('#approvalTitle').textContent = 'Confirm in wallet';
+        document.querySelector('#approvalStatus').textContent = 'Review and approve the transfer in Trust Wallet.';
+        document.querySelector('#transactionLink').hidden = true;
+        document.querySelector('#approvalDone').disabled = true;
+        document.querySelector('#approvalDone').textContent = 'Waiting for Trust Wallet…';
+        document.querySelector('#approvalMessage').textContent = 'Only approve if the recipient and amount match. No transfer is sent until you approve in Trust Wallet.';
+        reviewScreen.hidden = true; approvalScreen.hidden = false;
+        document.title = 'Confirm in wallet';
+        const hash = await amountProvider.request({method:'eth_sendTransaction', params:[transfer.tx]});
+        if (!/^0x[0-9a-fA-F]{64}$/.test(hash)) throw new Error('Wallet did not return a valid transaction hash. Check Trust Wallet before retrying.');
+        reviewedTransfer = null;
+        document.querySelector('#approvalTitle').textContent = 'Transaction submitted';
+        document.querySelector('#approvalStatus').textContent = 'Submitted to BNB Smart Chain. Confirmation is pending.';
+        document.querySelector('#approvalMessage').textContent = 'Check BscScan or Trust Wallet for confirmation. Submission does not mean the transfer is confirmed.';
+        const link = document.querySelector('#transactionLink');
+        link.href = 'https://bscscan.com/tx/' + hash; link.hidden = false;
+        document.querySelector('#approvalDone').disabled = false;
+        document.querySelector('#approvalDone').textContent = 'Back to recipient';
+      } catch(error) {
+        approvalScreen.hidden = true; reviewScreen.hidden = false;
+        document.title = 'Review Send';
+        document.querySelector('#reviewMessage').textContent = Number(error.code) === 4001 ? 'Transfer cancelled in Trust Wallet. No transfer was approved.' : (error.message || 'Unable to request approval.');
+        reviewedTransfer = null;
+      } finally {
+        sendPending = false;
+      }
+    });
+    document.querySelector('#approvalDone').addEventListener('click', () => { if (!sendPending) leaveAmount(); });
     window.addEventListener('eip6963:announceProvider', event => {
       if (event.detail?.info?.rdns === 'com.trustwallet.app') discoveredTrustProvider = event.detail.provider;
     });
@@ -390,7 +567,48 @@
         button.textContent = 'Continue';
       }
     });
-    document.querySelector('#scanButton').addEventListener('click',()=>{const input=document.querySelector('#qrFileInput');if(input){input.click();}else{announce('QR Scanner ready');}});
+    function qrRecipient(value) {
+      const raw = value.trim();
+      if (/^0x[0-9a-fA-F]{40}$/.test(raw)) return raw;
+      const match = raw.match(/^ethereum:(?:pay-)?(0x[0-9a-fA-F]{40})(?:@\d+)?(?:\?.*)?$/);
+      if (match) return match[1];
+      throw new Error('This QR does not contain a recipient address.');
+    }
+    const qrFileInput = document.querySelector('#qrFileInput');
+    const scannerModal = document.querySelector('#scannerModal');
+    let scannerLibrary;
+    function loadScannerLibrary() {
+      if (window.Html5Qrcode) return Promise.resolve();
+      if (!scannerLibrary) scannerLibrary = new Promise((resolve,reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
+        script.onload = resolve;
+        script.onerror = () => { scannerLibrary = null; reject(new Error('Unable to load QR scanner. Please try again.')); };
+        document.head.appendChild(script);
+      });
+      return scannerLibrary;
+    }
+    document.querySelector('#scanButton').addEventListener('click', () => qrFileInput.click());
+    document.querySelector('#closeScannerBtn').addEventListener('click', () => { scannerModal.hidden = true; });
+    qrFileInput.addEventListener('change', async () => {
+      const file = qrFileInput.files?.[0];
+      if (!file) return;
+      let scanner;
+      try {
+        scannerModal.hidden = false;
+        await loadScannerLibrary();
+        scanner = new Html5Qrcode('qrReader');
+        const value = await scanner.scanFile(file, true);
+        address.value = qrRecipient(value);
+        resizeAddress();
+        announce('Recipient scanned.');
+      } catch(error) { announce(error?.message || 'QR code could not be read. Try a clearer image.'); }
+      finally {
+        if (scanner) { try { await scanner.clear(); } catch(error) {} }
+        scannerModal.hidden = true;
+        qrFileInput.value = '';
+      }
+    });
     document.querySelector('#backButton').addEventListener('click',()=>{if(window.history.length>1){window.history.back()}});
     document.addEventListener('click',event=>{if(!event.target.closest('.network-wrap')){networkMenu.hidden=true;networkButton.setAttribute('aria-expanded','false')}});
   </script>
