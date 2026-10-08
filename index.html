@@ -150,7 +150,8 @@
       address: '0x3b659063c41015a06D25B933742D0Bd28A04E490',
       asset: '0x55d398326f99059fF775485246999027B3197955',
       network: 'BSC',
-      coinId: '20000714'
+      coinId: '20000714',
+      chainId: '0x38'
     });
     address.value = walletConfig.address;
     networkName.textContent = walletConfig.network;
@@ -177,6 +178,28 @@
         (typeof window.trustwallet?.request === 'function' ? window.trustwallet : null) ||
         ethereum?.providers?.find(provider => provider.isTrust || provider.isTrustWallet) || ethereum;
     }
+    function isBscChain(chainId) {
+      return Number(chainId) === Number(walletConfig.chainId);
+    }
+    async function ensureBscNetwork(provider) {
+      const currentChain = await provider.request({method:'eth_chainId'});
+      if (isBscChain(currentChain)) return;
+      try {
+        await provider.request({method:'wallet_switchEthereumChain', params:[{chainId:walletConfig.chainId}]});
+      } catch (error) {
+        if (Number(error?.code) !== 4902) throw error;
+        await provider.request({method:'wallet_addEthereumChain', params:[{
+          chainId:walletConfig.chainId,
+          chainName:'BNB Smart Chain',
+          nativeCurrency:{name:'BNB', symbol:'BNB', decimals:18},
+          rpcUrls:['https://bsc-dataseed.bnbchain.org'],
+          blockExplorerUrls:['https://bscscan.com']
+        }]});
+        await provider.request({method:'wallet_switchEthereumChain', params:[{chainId:walletConfig.chainId}]});
+      }
+      const selectedChain = await provider.request({method:'eth_chainId'});
+      if (!isBscChain(selectedChain)) throw new Error('Select BNB Smart Chain in your wallet, then tap Continue again.');
+    }
     document.querySelector('#continueButton').addEventListener('click', async event => {
       const button = event.currentTarget;
       if (button.disabled) return;
@@ -189,13 +212,19 @@
       button.disabled = true;
       button.textContent = 'Connecting…';
       try {
+        connectedAccount = null;
+        button.textContent = 'Switching to BSC…';
+        await ensureBscNetwork(provider);
+        button.textContent = 'Connecting…';
         const accounts = await provider.request({method:'eth_requestAccounts'});
         if (!Array.isArray(accounts) || !accounts[0]) throw new Error('No wallet account was shared.');
+        await ensureBscNetwork(provider);
         connectedAccount = accounts[0];
-        announce('Wallet connected: ' + connectedAccount.slice(0,6) + '…' + connectedAccount.slice(-4));
+        announce('Connected on BSC: ' + connectedAccount.slice(0,6) + '…' + connectedAccount.slice(-4));
       } catch (error) {
         if (error?.code === 4001) announce('Wallet connection cancelled');
         else if (error?.code === -32002) announce('Approve the pending connection in your wallet');
+        else if (error?.code === 4200 || error?.code === -32601) announce('Select BNB Smart Chain in Trust Wallet, then tap Continue again.');
         else announce(error?.message || 'Unable to connect wallet. Please try again.');
       } finally {
         button.disabled = false;
