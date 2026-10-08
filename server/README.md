@@ -28,7 +28,7 @@ Before enabling funding:
 4. Fund the gas sponsor wallet with BNB, then set SPONSOR_ENABLED=true only when the user asks to activate funding.
 5. Keep one service replica with this SQLite volume.
 
-The frontend sponsorApiUrl points to https://trust-wallet-gas-server-production.up.railway.app. APP_ORIGIN must match the website origin. Enable the frontend sponsorFundingEnabled flag only after the user asks to activate funding; it is currently false at the user's request.
+The frontend sponsorApiUrl points to https://trust-wallet-gas-server-production.up.railway.app. APP_ORIGIN must match the website origin. Funding activation was explicitly requested by the user on 8 October 2026; the frontend sponsorFundingEnabled flag is true. The sponsor wallet must hold BNB before top-ups can succeed. To disable funding, set SPONSOR_ENABLED=false and sponsorFundingEnabled=false.
 
 ## API
 
