@@ -4,7 +4,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { JsonRpcProvider, Wallet, parseEther, formatEther, verifyMessage } from 'ethers';
-import { RECIPIENT, TOKEN, LIMIT, tokenInterface, address, amount, fundingMessage } from './policy.js';
+import { RECIPIENT, SPONSOR, TOKEN, LIMIT, tokenInterface, address, amount, fundingMessage } from './policy.js';
 
 const origin=new URL(process.env.APP_ORIGIN || 'https://harendsinghraidfc-afk.github.io').origin;
 const enabled=process.env.SPONSOR_ENABLED==='true';
@@ -15,10 +15,19 @@ const allowedWallets=new Set((process.env.ALLOWED_WALLETS || '').split(',').filt
 const provider=new JsonRpcProvider(process.env.RPC_URL || 'https://bsc-dataseed.bnbchain.org',56,{batchMaxCount:1});
 const key=process.env.SPONSOR_PRIVATE_KEY;
 let signer=null;
+let signerStatus='not-configured';
+if(key) {
+  if(!/^0x[0-9a-fA-F]{64}$/.test(key)) signerStatus='invalid-format';
+  else {
+    try {
+      const candidate=new Wallet(key,provider);
+      if(address(candidate.address)===SPONSOR) {signer=candidate;signerStatus='matched';}
+      else signerStatus='address-mismatch';
+    } catch {signerStatus='invalid-key';}
+  }
+}
 if(enabled) {
-  if(!key || !/^0x[0-9a-fA-F]{64}$/.test(key)) throw new Error('Configure the sponsor signing secret before enabling sponsorship');
-  try {signer=new Wallet(key,provider);} catch {throw new Error('Invalid sponsor signing secret');}
-  if(address(signer.address)!==RECIPIENT) throw new Error('Sponsor signing address must match the configured To recipient');
+  if(!signer) throw new Error('Sponsor signing secret is missing, invalid, or does not match SPONSOR_ADDRESS');
   if(!allowedWallets.size) throw new Error('Configure the allowed wallet list before enabling sponsorship');
   if(process.env.RAILWAY_PROJECT_ID && !process.env.RAILWAY_VOLUME_MOUNT_PATH) throw new Error('Attach a persistent /data volume before enabling sponsorship');
 }
@@ -45,7 +54,7 @@ async function rpc(method,params) {
 }
 async function quote(wallet,selectedAmount) {
   const units=amount(selectedAmount);
-  if(address(wallet)===RECIPIENT) throw apiError(400,'Sender and sponsor must be different wallets');
+  if(address(wallet)===SPONSOR || address(wallet)===RECIPIENT) throw apiError(400,'Sender must differ from sponsor and recipient');
   if(BigInt(await rpc('eth_chainId',[]))!==56n) throw apiError(503,'Wrong RPC network');
   const call=data=>rpc('eth_call',[{to:TOKEN,data},'latest']);
   const [balanceHex,allowanceHex,bnbHex,priceHex,code]=await Promise.all([
@@ -70,7 +79,7 @@ async function quote(wallet,selectedAmount) {
   const required=(gas*price*120n+99n)/100n;
   const shortfall=required>BigInt(bnbHex)?required-BigInt(bnbHex):0n;
   if(shortfall>maxGrant) throw apiError(400,'Required gas funding exceeds the per-request limit');
-  return {wallet,recipient:RECIPIENT,approvalLimit:'10',amount:selectedAmount,gasPriceWei:price.toString(),gasUnits:gas.toString(),fundingWei:shortfall.toString(),fundingBnb:formatEther(shortfall),sponsorTransactionFeeWei:(21000n*price).toString(),expiresInSeconds:300};
+  return {wallet,sponsorAddress:SPONSOR,recipient:RECIPIENT,approvalLimit:'10',amount:selectedAmount,gasPriceWei:price.toString(),gasUnits:gas.toString(),fundingWei:shortfall.toString(),fundingBnb:formatEther(shortfall),sponsorTransactionFeeWei:(21000n*price).toString(),expiresInSeconds:300};
 }
 async function body(req) {
   let chunks=[],size=0;
@@ -92,7 +101,7 @@ async function fund(id,signature) {
   if(value===0n) {db.prepare("UPDATE challenges SET state='not-needed' WHERE id=?").run(id);return {state:'not-needed',fundingWei:'0'};}
   if(value>signedMax) throw apiError(409,'Gas price changed. Sign a new funding request');
   const price=BigInt(fresh.gasPriceWei), cost=value+21000n*price;
-  if(await provider.getBalance(RECIPIENT)<cost) throw apiError(503,'Sponsor wallet needs BNB funding');
+  if(await provider.getBalance(SPONSOR)<cost) throw apiError(503,'Sponsor wallet needs BNB funding');
   const day=new Date().toISOString().slice(0,10);
   db.exec('BEGIN IMMEDIATE');
   try {
@@ -120,10 +129,10 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='OPTIONS') {res.writeHead(204,{'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'});res.end();return;}
     limit(req.socket.remoteAddress || 'unknown');
     const url=new URL(req.url,'http://localhost');
-    if(req.method==='GET' && url.pathname==='/health') return respond(res,200,{ok:true,chainId:56,sponsorAddress:RECIPIENT,sponsorshipEnabled:enabled,mode:'recipient-funded-bnb-topup',approvalLimit:'10'});
+    if(req.method==='GET' && url.pathname==='/health') return respond(res,200,{ok:true,chainId:56,sponsorAddress:SPONSOR,recipientAddress:RECIPIENT,sponsorshipEnabled:enabled,signerStatus,signerMatchesSponsor:signerStatus==='matched',mode:'sponsor-funded-bnb-topup',approvalLimit:'10'});
     if(req.method==='POST' && url.pathname==='/api/gas/challenge') {
       const input=await body(req), wallet=address(input.wallet);
-      if(input.recipient && address(input.recipient)!==RECIPIENT) throw apiError(400,'Recipient must match the configured sponsor');
+      if(input.recipient && address(input.recipient)!==RECIPIENT) throw apiError(400,'Recipient must match the configured payment recipient');
       const result=await quote(wallet,input.amount);
       if(!enabled) return respond(res,503,{error:'Sponsor signing secret and funding policy must be configured',quote:result});
       if(!allowedWallets.has(wallet)) throw apiError(403,'Wallet is not approved for gas sponsorship');
