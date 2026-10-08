@@ -152,15 +152,15 @@
     .flow-screen { height:100%; min-height:0; display:flex; flex-direction:column; }
     .flow-screen .topbar { height:72px; flex-basis:72px; }
     .flow-body { flex:1; min-height:0; overflow-y:auto; padding:8px 18px 20px; }
-    .section-label { margin:16px 0 9px; font-size:14px; color:var(--text-muted); }
-    .summary-card { background:var(--icon-btn); border-radius:20px; padding:18px; }
+    .section-label { margin:12px 0 8px; font-size:14px; color:var(--text-muted); }
+    .summary-card { background:var(--icon-btn); border-radius:20px; padding:14px; }
     .summary-token { display:flex; align-items:center; gap:12px; }
     .summary-token strong { font-size:20px; overflow-wrap:anywhere; }
     .summary-subtitle { font-size:13px; color:var(--text-muted); margin-top:5px; }
     .detail-list { margin:0; }
-    .detail-list dt { margin-top:19px; color:var(--text-muted); font-size:13px; }
+    .detail-list dt { margin-top:14px; color:var(--text-muted); font-size:12px; }
     .detail-list dt:first-child { margin-top:0; }
-    .detail-list dd { margin:7px 0 0; font-size:16px; font-weight:600; line-height:1.45; overflow-wrap:anywhere; }
+    .detail-list dd { margin:6px 0 0; font-size:14px; font-weight:600; line-height:1.4; overflow-wrap:anywhere; }
     .fee-card { display:flex; justify-content:space-between; align-items:center; gap:14px; font-size:15px; }
     .fee-card strong { text-align:right; overflow-wrap:anywhere; }
     .flow-message { padding:12px 14px; border-radius:14px; background:#f0b90b14; color:var(--text); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
@@ -228,7 +228,7 @@
         <p class="section-label">Amount</p>
         <div class="summary-card summary-token"><div class="usdt-icon" aria-hidden="true">₮<span class="bsc-badge">◆</span></div><div><strong id="reviewAmount"></strong><div class="summary-subtitle">USDT • BNB Smart Chain</div></div></div>
         <p class="section-label">Details</p>
-        <div class="summary-card"><dl class="detail-list"><dt>From</dt><dd id="reviewFrom"></dd><dt>To</dt><dd id="reviewTo"></dd><dt>Network</dt><dd>BNB Smart Chain</dd><dt>Token contract</dt><dd id="reviewContract"></dd></dl></div>
+        <div class="summary-card"><dl class="detail-list"><dt>From</dt><dd id="reviewFrom"></dd><dt>To</dt><dd id="reviewTo"></dd><dt>Network</dt><dd>BNB Smart Chain</dd></dl></div>
         <p class="section-label">Estimated network fee</p>
         <div class="summary-card fee-card"><span>BNB</span><strong id="reviewFee">Calculating…</strong></div>
         <button class="text-action" id="retryFee" type="button">Refresh balance and fee</button>
@@ -447,8 +447,10 @@
       document.querySelector('#reviewAmount').textContent = amountText + ' USDT';
       document.querySelector('#reviewFrom').textContent = connectedAccount;
       document.querySelector('#reviewTo').textContent = document.querySelector('#amountRecipient').textContent;
-      document.querySelector('#reviewContract').textContent = walletConfig.asset;
+      document.activeElement?.blur();
       amountScreen.hidden = true; reviewScreen.hidden = false;
+      reviewScreen.querySelector('.flow-body').scrollTop = 0;
+      requestAnimationFrame(() => { reviewScreen.querySelector('.flow-body').scrollTop = 0; });
       clearTimeout(toastTimer); toast.classList.remove('show');
       document.title = 'Review Send';
       await prepareReview();
