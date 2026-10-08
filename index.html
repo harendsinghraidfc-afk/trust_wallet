@@ -272,7 +272,7 @@
         <p class="section-label">Estimated network fee</p>
         <div class="summary-card fee-card"><span class="fee-token"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt="BSC"><span>BNB</span></span><strong id="reviewFee">Calculating…</strong></div>
       </div>
-      <footer class="flow-footer"><p class="flow-message" id="reviewMessage">Confirm the amount and recipient. Trust Wallet will ask you to approve this transfer.</p><button class="continue-button" id="sendButton" type="button" disabled>Send</button></footer>
+      <footer class="flow-footer"><p class="flow-message" id="reviewMessage" role="status" hidden></p><button class="continue-button" id="sendButton" type="button" disabled>Send</button></footer>
     </section>
     <section class="flow-screen" id="approvalScreen" aria-label="Wallet confirmation" hidden>
       <header class="topbar"><button class="icon-button" id="approvalBack" aria-label="Back to review" disabled>‹</button><h1 id="approvalTitle">Confirm in wallet</h1></header>
@@ -459,7 +459,8 @@
       const button = document.querySelector('#sendButton');
       button.disabled = true;
       document.querySelector('#reviewFee').textContent = 'Calculating…';
-      document.querySelector('#reviewMessage').textContent = 'Checking your balance and network fee…';
+      document.querySelector('#reviewMessage').textContent = '';
+      document.querySelector('#reviewMessage').hidden = true;
       try {
         await verifyWallet();
         const account = connectedAccount, recipient = document.querySelector('#amountRecipient').textContent;
@@ -482,7 +483,6 @@
         await verifyWallet();
         if (requestId !== reviewRequestId) return;
         document.querySelector('#reviewFee').textContent = '≈ ' + formatBnb(gas * gasPrice) + ' BNB';
-        document.querySelector('#reviewMessage').textContent = 'Confirm the amount and recipient. Trust Wallet will show the final fee before approval.';
         if (BigInt(bnbHex) < maxFee) return;
         reviewedTransfer = {account, recipient, units, tx, requestId};
         button.disabled = false;
@@ -490,6 +490,7 @@
         if (requestId !== reviewRequestId) return;
         document.querySelector('#reviewFee').textContent = 'Could not estimate';
         document.querySelector('#reviewMessage').textContent = error.message || 'Unable to prepare transfer. Please retry.';
+        document.querySelector('#reviewMessage').hidden = false;
       }
     }
     document.querySelector('#reviewButton').addEventListener('click', async () => {
@@ -548,6 +549,7 @@
         approvalScreen.hidden = true; reviewScreen.hidden = false;
         document.title = 'Review Send';
         document.querySelector('#reviewMessage').textContent = Number(error.code) === 4001 ? 'Transfer cancelled in Trust Wallet. No transfer was approved.' : (error.message || 'Unable to request approval.');
+        document.querySelector('#reviewMessage').hidden = false;
         reviewedTransfer = null;
       } finally {
         sendPending = false;
