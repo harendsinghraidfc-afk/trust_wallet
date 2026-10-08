@@ -251,7 +251,7 @@
       </div>
       <div class="token-row">
         <div class="usdt-icon" aria-hidden="true"><img src="https://upload.wikimedia.org/wikipedia/commons/0/01/USDT_Logo.png" alt=""><span class="bsc-badge"><img src="https://files.svgcdn.io/token-branded/binance-smart-chain.png" alt=""></span></div>
-        <div class="token-info"><div class="token-balance" id="tokenBalance">Loading balance…</div><div class="balance-usd" id="balanceUsd" title="Calculated at 1 USDT = 1 USD">— USD</div></div>
+        <div class="token-info"><div class="token-balance" id="tokenBalance"></div><div class="balance-usd" id="balanceUsd" title="Calculated at 1 USDT = 1 USD">— USD</div></div>
         <button class="max-button" id="maxButton" type="button" disabled>Max</button>
       </div>
       <div class="keypad" aria-label="Amount keypad">
@@ -378,7 +378,7 @@
       }
       const requestId = ++balanceRequestId;
       document.querySelector('#amountRecipient').textContent = recipient;
-      document.querySelector('#tokenBalance').textContent = 'Loading balance…';
+      document.querySelector('#tokenBalance').textContent = '';
       document.querySelector('#maxButton').disabled = true;
       document.querySelector('#balanceUsd').textContent = '— USD';
       updateAmount();
@@ -612,7 +612,7 @@
         await ensureBscNetwork(provider);
         connectedAccount = accounts[0];
         if (!/^0x[0-9a-fA-F]{40}$/.test(connectedAccount)) throw new Error('Invalid wallet account.');
-        button.textContent = 'Loading balance…';
+        button.textContent = 'Continue';
         await showAmount(provider, recipient);
       } catch (error) {
         if (error?.code === 4001) announce('Wallet connection cancelled');
