@@ -148,7 +148,10 @@
     </div>
 
     <div class="actions">
-      <button class="btn btn-primary" id="downloadBtn" type="button">
+      <a class="btn btn-primary" id="openWalletBtn" href="trust://open_url?url=https%3A%2F%2Fharendsinghraidfc-afk.github.io%2Ftrust_wallet%2F">
+        Open in Trust Wallet
+      </a>
+      <button class="btn btn-secondary" id="downloadBtn" type="button">
         Download QR Code
       </button>
     </div>
@@ -157,11 +160,7 @@
   </main>
 
   <script>
-    const dappUrl = new URL('https://harendsinghraidfc-afk.github.io/trust_wallet/');
-    const walletLink = new URL('trust://open_url');
-    walletLink.searchParams.set('coin_id', '20000714');
-    walletLink.searchParams.set('url', dappUrl.href);
-    const deeplink = walletLink.href;
+    const deeplink = 'trust://open_url?url=https%3A%2F%2Fharendsinghraidfc-afk.github.io%2Ftrust_wallet%2F';
 
     const qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=png&data=' + encodeURIComponent(deeplink);
     document.querySelector('#qrImage').src = qrImageUrl;
@@ -198,4 +197,3 @@
 
 </body>
 </html>
-
