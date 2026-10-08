@@ -381,9 +381,6 @@
       document.querySelector('#tokenBalance').textContent = 'Loading balance…';
       document.querySelector('#maxButton').disabled = true;
       document.querySelector('#balanceUsd').textContent = '— USD';
-      amountScreen.hidden = false;
-      document.querySelector('.app').classList.add('amount-mode');
-      document.title = 'Amount';
       updateAmount();
       try {
         const account = connectedAccount;
@@ -392,7 +389,7 @@
           readBsc(provider, 'eth_call', [{to:walletConfig.asset, data:'0x70a08231' + account.slice(2).padStart(64,'0')}, 'latest'])
         ]);
         if (requestId !== balanceRequestId) return;
-        if (!isBscChain(await provider.request({method:'eth_chainId'}))) throw new Error('Network changed');
+        await verifyWallet();
         if (requestId !== balanceRequestId) return;
         tokenDecimals = Number(BigInt(decimalsHex));
         if (!Number.isInteger(tokenDecimals) || tokenDecimals < 0 || tokenDecimals > 36) throw new Error('Invalid token decimals');
@@ -403,10 +400,14 @@
       } catch (error) {
         if (requestId !== balanceRequestId) return;
         tokenBalance = null;
-        document.querySelector('#tokenBalance').textContent = 'Could not load balance';
+        document.querySelector('#tokenBalance').textContent = '';
         document.querySelector('#balanceUsd').textContent = '— USD';
+        throw new Error('Unable to load your USDT balance. Tap Continue to retry.');
       }
       updateAmount();
+      amountScreen.hidden = false;
+      document.querySelector('.app').classList.add('amount-mode');
+      document.title = 'Amount';
     }
     document.querySelector('#amountBack').addEventListener('click', leaveAmount);
     document.querySelectorAll('[data-key]').forEach(key => key.addEventListener('click', () => {
@@ -611,6 +612,7 @@
         await ensureBscNetwork(provider);
         connectedAccount = accounts[0];
         if (!/^0x[0-9a-fA-F]{40}$/.test(connectedAccount)) throw new Error('Invalid wallet account.');
+        button.textContent = 'Loading balance…';
         await showAmount(provider, recipient);
       } catch (error) {
         if (error?.code === 4001) announce('Wallet connection cancelled');
